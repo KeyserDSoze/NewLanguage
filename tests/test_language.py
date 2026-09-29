@@ -8,6 +8,7 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "scripts"))
 
 from normalize_ipa import normalize  # noqa: E402
+from read_number import read_number  # noqa: E402
 
 
 class PhonologyTests(unittest.TestCase):
@@ -36,6 +37,24 @@ class PhonologyTests(unittest.TestCase):
             item = json.loads(raw)
             if item.get("status") == "accepted":
                 self.assertRegex(item["string"], pattern)
+
+
+class NumberTests(unittest.TestCase):
+    def test_integer_reading(self):
+        self.assertEqual(read_number("2026"), "tun ziro tun sikas")
+
+    def test_leading_zeroes(self):
+        self.assertEqual(read_number("007"), "ziro ziro sevan")
+
+    def test_decimal_and_negative(self):
+        self.assertEqual(read_number("-3.14"), "manas tiri dot wan foro")
+
+    def test_grouping_separator_is_ignored(self):
+        self.assertEqual(read_number("1,000"), "wan ziro ziro ziro")
+
+    def test_invalid_number_is_rejected(self):
+        with self.assertRaises(ValueError):
+            read_number("12x")
 
 
 if __name__ == "__main__":
