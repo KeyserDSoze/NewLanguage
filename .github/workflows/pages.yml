@@ -1,0 +1,81 @@
+name: Deploy STRING site
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - "grammar/**"
+      - "dictionary/**"
+      - "spec/**"
+      - "site/**"
+      - "scripts/build_books.py"
+      - "scripts/build_site.py"
+      - "scripts/validate_sources.py"
+      - "tests/**"
+      - "VERSION"
+      - ".github/workflows/pages.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+
+      - name: Configure Pages
+        uses: actions/configure-pages@v5
+
+      - name: Validate language sources
+        run: python3 scripts/validate_sources.py
+
+      - name: Run language tests
+        run: python3 -m unittest discover -s tests -v
+
+      - name: Install Pandoc
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y pandoc
+
+      - name: Assemble canonical publications
+        run: python3 scripts/build_books.py
+
+      - name: Build static site
+        run: python3 scripts/build_site.py
+
+      - name: Render grammar HTML
+        run: |
+          pandoc build/string-grammar.md \
+            --standalone \
+            --toc \
+            --css assets/style.css \
+            --metadata title="STRING Grammar" \
+            -o public/grammar.html
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v4
+        with:
+          path: public
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
