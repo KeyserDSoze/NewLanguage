@@ -26,7 +26,15 @@ def read_version() -> str:
 
 def source_commit() -> str:
     sha = os.environ.get("GITHUB_SHA", "").strip()
-    return sha[:12] if sha else "local-build"
+    return sha if sha else "local-build"
+
+
+def sha256(path: Path) -> str:
+    digest = hashlib.sha256()
+    with path.open("rb") as handle:
+        for chunk in iter(lambda: handle.read(1024 * 1024), b""):
+            digest.update(chunk)
+    return digest.hexdigest()
 
 
 def normative_grammar_files() -> list[Path]:
@@ -67,13 +75,13 @@ def md_value(value) -> str:
     return str(value).replace("\n", " ").strip()
 
 
-def build_grammar(version: str, commit: str) -> tuple[Path, list[str]]:
+def build_grammar(version: str, commit: str) -> tuple[Path, list[Path]]:
     files = normative_grammar_files()
     parts = [
         "# STRING Grammar",
         "",
         f"**Version:** {version}  ",
-        f"**Source commit:** {commit}  ",
+        f"**Source commit:** {commit[:12]}  ",
         "",
         "This book is generated automatically from the normative grammar files in the STRING repository.",
         "",
@@ -85,7 +93,7 @@ def build_grammar(version: str, commit: str) -> tuple[Path, list[str]]:
 
     output = BUILD / "string-grammar.md"
     output.write_text("\n\n".join(parts).rstrip() + "\n", encoding="utf-8")
-    return output, [str(p.relative_to(ROOT)) for p in files]
+    return output, files
 
 
 def build_dictionary(version: str, commit: str) -> tuple[Path, int]:
@@ -100,7 +108,7 @@ def build_dictionary(version: str, commit: str) -> tuple[Path, int]:
         intro,
         "",
         f"**Version:** {version}  ",
-        f"**Source commit:** {commit}  ",
+        f"**Source commit:** {commit[:12]}  ",
         f"**Accepted entries:** {len(accepted)}  ",
         "",
     ]
@@ -144,22 +152,38 @@ def build_dictionary(version: str, commit: str) -> tuple[Path, int]:
 def copy_dictionary_data(version: str) -> str:
     source = ROOT / "dictionary" / "entries.jsonl"
     target = DIST / f"STRING-Dictionary-v{version}.jsonl"
-    if source.exists():
-        shutil.copyfile(source, target)
-    else:
-        target.write_text("", encoding="utf-8")
+    shutil.copyfile(source, target)
     return target.name
 
 
-def write_manifest(version: str, commit: str, grammar_sources: list[str], accepted_entries: int, dictionary_data: str) -> None:
+def write_manifest(
+    version: str,
+    commit: str,
+    grammar_sources: list[Path],
+    accepted_entries: int,
+    dictionary_data: str,
+) -> None:
+    dictionary_source = ROOT / "dictionary" / "entries.jsonl"
+    phonology_source = ROOT / "spec" / "phonology.json"
+    generator_source = ROOT / "scripts" / "build_books.py"
+
+    source_hashes = {
+        str(path.relative_to(ROOT)): sha256(path)
+        for path in grammar_sources
+    }
+    for path in [dictionary_source, phonology_source, generator_source]:
+        source_hashes[str(path.relative_to(ROOT))] = sha256(path)
+
     manifest = {
         "project": "STRING",
         "version": version,
         "source_commit": commit,
-        "grammar_sources": grammar_sources,
+        "grammar_sources": [str(p.relative_to(ROOT)) for p in grammar_sources],
+        "phonology_source": "spec/phonology.json",
         "dictionary_source": "dictionary/entries.jsonl",
         "dictionary_accepted_entries": accepted_entries,
         "dictionary_release_data": dictionary_data,
+        "sha256": source_hashes,
     }
     (DIST / f"BUILD-MANIFEST-v{version}.json").write_text(
         json.dumps(manifest, indent=2, ensure_ascii=False) + "\n",
@@ -178,7 +202,6 @@ def main() -> None:
     dictionary_md, accepted_entries = build_dictionary(version, commit)
     dictionary_data = copy_dictionary_data(version)
 
-    # Stable intermediate names consumed by Pandoc in CI.
     shutil.copyfile(grammar_md, DIST / f"STRING-Grammar-v{version}.md")
     shutil.copyfile(dictionary_md, DIST / f"STRING-Dictionary-v{version}.md")
 
@@ -186,6 +209,7 @@ def main() -> None:
 
     print(json.dumps({
         "version": version,
+        "source_commit": commit,
         "grammar_markdown": str(grammar_md.relative_to(ROOT)),
         "dictionary_markdown": str(dictionary_md.relative_to(ROOT)),
         "accepted_entries": accepted_entries,
