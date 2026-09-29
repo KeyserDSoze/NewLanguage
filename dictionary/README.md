@@ -1,65 +1,88 @@
 # STRING Dictionary
 
-The first major lexical target is a dictionary based on approximately the **50,000 most-used English words**.
+The first large lexical target is a dictionary based on approximately the **50,000 most-used English words**.
 
-English supplies the source concepts and recognizable pronunciations. STRING supplies a regular pronunciation and spelling system.
+English supplies the lexical anchor and recognizable pronunciation. STRING supplies a small, regular sound system and deterministic spelling.
+
+## Canonical files
+
+- `entries.jsonl` — accepted and proposed lexical data.
+- `schema.md` — dictionary record format.
+- `collision-policy.md` — rules for avoiding accidental homophones.
+- `../spec/phonology.json` — machine-readable sound system and IPA mapping.
 
 ## Generation pipeline
 
-Each candidate entry follows this pipeline:
-
 ```text
-English lemma
-  + part of speech
-  + intended sense
-  + frequency rank
-        ↓
-reference English IPA
-        ↓
-phoneme normalization
-        ↓
-STRING phonotactic repair
-        ↓
+English lemma + sense + frequency
+            ↓
+licensed/reference pronunciation data
+            ↓
+broad English IPA
+            ↓
+scripts/normalize_ipa.py
+            ↓
+mechanical STRING candidate
+            ↓
 collision check
-        ↓
-human review
-        ↓
-accepted STRING form
+            ↓
+human review / optional shortening
+            ↓
+scripts/validate_sources.py
+            ↓
+accepted STRING entry
 ```
+
+The mechanical candidate is reproducible but is never automatically normative.
 
 ## Core lexical rule
 
 STRING follows **English sound, not English spelling**.
 
-For example, an English spelling containing silent letters or inconsistent vowel letters must never be copied blindly. The IPA pronunciation is the lexical source used by the normalizer.
+Silent letters, English vowel ambiguity, and inconsistent English spelling conventions are discarded.
+
+## Current core vocabulary
+
+The repository already contains the accepted grammatical vocabulary needed by the current grammar, including:
+
+- personal pronouns;
+- negation;
+- tense markers;
+- core auxiliaries;
+- demonstratives;
+- question words;
+- a small set of example lexical words.
+
+This core vocabulary is reserved before mass generation begins.
 
 ## Frequency list
 
-The 50,000-word list must record its source, license, frequency methodology, and corpus date.
+The 50,000-word source must record:
 
-Raw source lists belong in a source-data area and should not be silently edited. Generated STRING entries should be reproducible from source data plus normalization rules.
+- corpus/source name;
+- source version or date;
+- license;
+- frequency methodology;
+- lemma/sense policy.
+
+Raw imported source data must remain reproducible and should not be silently edited.
 
 ## Sense separation
 
-One English spelling can represent multiple unrelated meanings. Dictionary generation must therefore operate on **lemma + sense**, not only on text strings.
+Generation operates on **lemma + intended sense**, not spelling alone.
 
-Where a single STRING word can safely cover related senses, that relationship should be documented explicitly.
+Related meanings may intentionally share one STRING entry. Unrelated meanings should not accidentally become homophones.
 
-## Collisions
+## Validation
 
-Because STRING deliberately has a small and regular sound system, unrelated English words may normalize to the same candidate form.
+Run:
 
-Collisions must be resolved systematically, for example by:
+```bash
+python3 scripts/validate_sources.py
+```
 
-- choosing a secondary recognizable English pronunciation feature;
-- using a legal extra CV unit;
-- reserving extremely short forms for high-frequency grammar words;
-- rejecting a candidate that is too easily confused in speech.
+A failed validation blocks the publication pipeline.
 
-Collision handling must never introduce irregular pronunciation.
+## Single source
 
-## Data format
-
-The canonical machine-readable dictionary will use structured data. See `schema.md`.
-
-Human-facing PDF, EPUB, and website versions are generated from the same canonical data rather than maintained separately.
+PDF, EPUB, website, search indexes, and machine-readable exports are generated from the canonical dictionary data. None of those outputs is maintained separately.
