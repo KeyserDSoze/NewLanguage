@@ -16,6 +16,7 @@ class PhonologyTests(unittest.TestCase):
         self.assertEqual(normalize("/mi/"), ("mi", "mi"))
         self.assertEqual(normalize("/ju/"), ("yu", "yu"))
         self.assertEqual(normalize("/hæv/"), ("hav", "ha-v"))
+        self.assertEqual(normalize("/pliz/"), ("piliz", "pi-li-z"))
 
     def test_diphthong_collapse(self):
         self.assertEqual(normalize("/goʊ/"), ("go", "go"))
