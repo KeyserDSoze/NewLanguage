@@ -1,0 +1,162 @@
+name: Build and release STRING
+
+on:
+  push:
+    branches:
+      - main
+    tags:
+      - "v*"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+      version_changed: ${{ steps.version_changed.outputs.changed }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Read version
+        id: version
+        shell: bash
+        run: |
+          VERSION="$(tr -d '[:space:]' < VERSION)"
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+
+      - name: Detect VERSION change
+        id: version_changed
+        shell: bash
+        run: |
+          CHANGED=false
+          if [[ "${{ github.event_name }}" == "push" && "${{ github.ref }}" == "refs/heads/main" ]]; then
+            BEFORE="${{ github.event.before }}"
+            if [[ -n "$BEFORE" && "$BEFORE" != "0000000000000000000000000000000000000000" ]]; then
+              if git diff --name-only "$BEFORE" "$GITHUB_SHA" | grep -qx "VERSION"; then
+                CHANGED=true
+              fi
+            else
+              CHANGED=true
+            fi
+          fi
+          echo "changed=$CHANGED" >> "$GITHUB_OUTPUT"
+
+      - name: Verify tag/version agreement
+        if: startsWith(github.ref, 'refs/tags/v')
+        shell: bash
+        run: |
+          VERSION="${{ steps.version.outputs.version }}"
+          if [[ "${GITHUB_REF_NAME}" != "v${VERSION}" ]]; then
+            echo "Tag ${GITHUB_REF_NAME} does not match VERSION v${VERSION}" >&2
+            exit 1
+          fi
+
+      - name: Install publishing tools
+        shell: bash
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y pandoc texlive-xetex fonts-dejavu-core
+
+      - name: Generate book sources
+        shell: bash
+        run: python3 scripts/build_books.py
+
+      - name: Build EPUB and PDF books
+        shell: bash
+        run: |
+          VERSION="${{ steps.version.outputs.version }}"
+
+          pandoc "build/string-grammar.md"             --standalone             --toc             --metadata title="STRING Grammar"             --metadata subtitle="Version ${VERSION}"             -o "dist/STRING-Grammar-v${VERSION}.epub"
+
+          pandoc "build/string-grammar.md"             --standalone             --toc             --pdf-engine=xelatex             -V mainfont="DejaVu Serif"             -V geometry:margin=25mm             --metadata title="STRING Grammar"             --metadata subtitle="Version ${VERSION}"             -o "dist/STRING-Grammar-v${VERSION}.pdf"
+
+          pandoc "build/string-dictionary.md"             --standalone             --toc             --metadata title="STRING Dictionary"             --metadata subtitle="Version ${VERSION}"             -o "dist/STRING-Dictionary-v${VERSION}.epub"
+
+          pandoc "build/string-dictionary.md"             --standalone             --toc             --pdf-engine=xelatex             -V mainfont="DejaVu Serif"             -V geometry:margin=25mm             --metadata title="STRING Dictionary"             --metadata subtitle="Version ${VERSION}"             -o "dist/STRING-Dictionary-v${VERSION}.pdf"
+
+      - name: Create checksums
+        shell: bash
+        run: |
+          VERSION="${{ steps.version.outputs.version }}"
+          (
+            cd dist
+            sha256sum               "STRING-Grammar-v${VERSION}.pdf"               "STRING-Grammar-v${VERSION}.epub"               "STRING-Dictionary-v${VERSION}.pdf"               "STRING-Dictionary-v${VERSION}.epub"               "STRING-Dictionary-v${VERSION}.jsonl"               "BUILD-MANIFEST-v${VERSION}.json"               > "SHA256SUMS-v${VERSION}.txt"
+          )
+
+      - name: Upload build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: string-v${{ steps.version.outputs.version }}
+          path: |
+            dist/*.pdf
+            dist/*.epub
+            dist/*.jsonl
+            dist/*.json
+            dist/SHA256SUMS-*.txt
+          if-no-files-found: error
+
+  release:
+    needs: build
+    if: >
+      startsWith(github.ref, 'refs/tags/v') ||
+      (github.event_name == 'push' &&
+       github.ref == 'refs/heads/main' &&
+       needs.build.outputs.version_changed == 'true')
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Download generated books
+        uses: actions/download-artifact@v4
+        with:
+          name: string-v${{ needs.build.outputs.version }}
+          path: dist
+
+      - name: Create version tag when VERSION changed on main
+        if: github.ref == 'refs/heads/main'
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          VERSION="${{ needs.build.outputs.version }}"
+          TAG="v${VERSION}"
+
+          if git rev-parse "$TAG" >/dev/null 2>&1; then
+            EXISTING="$(git rev-list -n 1 "$TAG")"
+            if [[ "$EXISTING" != "$GITHUB_SHA" ]]; then
+              echo "Tag $TAG already exists at $EXISTING; refusing to move a released version." >&2
+              exit 1
+            fi
+          else
+            git config user.name "github-actions[bot]"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git tag -a "$TAG" "$GITHUB_SHA" -m "STRING $TAG"
+            git push origin "$TAG"
+          fi
+
+      - name: Publish GitHub Release
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          VERSION="${{ needs.build.outputs.version }}"
+          TAG="v${VERSION}"
+
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            gh release upload "$TAG" dist/* --clobber
+          else
+            gh release create "$TAG" dist/*               --title "STRING $TAG"               --generate-notes
+          fi
