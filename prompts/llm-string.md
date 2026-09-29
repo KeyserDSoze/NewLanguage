@@ -86,7 +86,11 @@ Do not present a new word as accepted unless it is actually an accepted dictiona
 - indefinite reference is compositional: `sam/heni/nan/hol + yuman/tin`, with `hic` for each/every, `bot` for both, and `sem` for same;
 - `wat + NOUN` covers ordinary what/which selection, `hu + NOUN` uses the normal possessor slot for whose, and `ha meni + NOUN` asks how many;
 - a direct object follows the verb, while recipients and destinations use `tu`; do not copy English double-object order;
-- preposition `tu` marks a real goal/recipient and is never inserted automatically as an infinitive marker.
+- preposition `tu` marks a real goal/recipient and is never inserted automatically as an infinitive marker;
+- canonical noun-phrase order is `[SELECTOR] [POSSESSOR] [QUANTITY] [MODIFIER...] NOUN [RELATIVE CLAUSE]`;
+- canonical predicate order is `[TENSE] [MODAL/DEPENDENCY] [HAV] [BI] VERB`, with `not` immediately before the predicate element it negates;
+- direct objects precede additional relational phrases;
+- `STRING` is an external project/language label, not currently a canonical in-language lexical word or autonym.
 
 Always consult the grammar chapters for exact ordering and examples.
 
