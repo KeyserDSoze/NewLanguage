@@ -66,4 +66,6 @@ jobs:
           path: |
             build/dictionary-candidates.jsonl
             build/dictionary-candidates.meta.json
+            build/dictionary-collisions.jsonl
+            build/dictionary-pronunciation-review.jsonl
           if-no-files-found: error
