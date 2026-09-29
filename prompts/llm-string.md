@@ -82,7 +82,11 @@ Do not present a new word as accepted unless it is actually an accepted dictiona
 - `wan hader` expresses reciprocal one-another/each-other reference;
 - dates use `det YYYY-MM-DD` and times use `tam HH:MM[:SS]`, with digit-by-digit reading from the numeric spec;
 - modal chains remain invariant: `kan` ability, `me` possibility/permission, `nid` need, `mas` strong necessity, `xud` advice, and `won` desire/intention;
-- tense precedes a modal or dependency verb, and `not` normally scopes over the next predicate operator.
+- tense precedes a modal or dependency verb, and `not` normally scopes over the next predicate operator;
+- indefinite reference is compositional: `sam/heni/nan/hol + yuman/tin`, with `hic` for each/every, `bot` for both, and `sem` for same;
+- `wat + NOUN` covers ordinary what/which selection, `hu + NOUN` uses the normal possessor slot for whose, and `ha meni + NOUN` asks how many;
+- a direct object follows the verb, while recipients and destinations use `tu`; do not copy English double-object order;
+- preposition `tu` marks a real goal/recipient and is never inserted automatically as an infinitive marker.
 
 Always consult the grammar chapters for exact ordering and examples.
 
