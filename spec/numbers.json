@@ -1,0 +1,31 @@
+{
+  "schema_version": 1,
+  "status": "working-standard",
+  "base": 10,
+  "written_digits": "0123456789",
+  "reading": "digit-by-digit",
+  "digits": {
+    "0": "ziro",
+    "1": "wan",
+    "2": "tun",
+    "3": "tiri",
+    "4": "foro",
+    "5": "fav",
+    "6": "sikas",
+    "7": "sevan",
+    "8": "het",
+    "9": "nayan"
+  },
+  "decimal_separator": {
+    "symbol": ".",
+    "spoken": "dot"
+  },
+  "negative": {
+    "symbol": "-",
+    "spoken": "manas"
+  },
+  "grouping": {
+    "spoken": false,
+    "note": "Grouping separators are ignored when reading the digit sequence."
+  }
+}
