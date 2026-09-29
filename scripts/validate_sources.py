@@ -11,6 +11,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 SPEC_PATH = ROOT / "spec" / "phonology.json"
+NUMBER_SPEC_PATH = ROOT / "spec" / "numbers.json"
 DICTIONARY_PATH = ROOT / "dictionary" / "entries.jsonl"
 
 VALID_STATUSES = {"proposed", "reviewed", "accepted", "deprecated"}
@@ -49,6 +50,18 @@ def segment(word: str, vowels: set[str], consonants: set[str]) -> str:
     return "-".join(parts)
 
 
+def load_json(path: Path, errors: list[str]) -> dict:
+    try:
+        value = json.loads(path.read_text(encoding="utf-8"))
+    except Exception as exc:
+        fail(errors, f"Cannot load {path.relative_to(ROOT)}: {exc}")
+        return {}
+    if not isinstance(value, dict):
+        fail(errors, f"{path.relative_to(ROOT)} must contain a JSON object")
+        return {}
+    return value
+
+
 def load_entries(errors: list[str]) -> list[dict]:
     if not DICTIONARY_PATH.exists():
         fail(errors, f"Missing {DICTIONARY_PATH.relative_to(ROOT)}")
@@ -72,13 +85,53 @@ def load_entries(errors: list[str]) -> list[dict]:
     return entries
 
 
+def validate_number_spec(
+    errors: list[str],
+    number_spec: dict,
+    accepted_words: set[str],
+    pattern: re.Pattern[str],
+) -> None:
+    digits = number_spec.get("digits")
+    if not isinstance(digits, dict):
+        fail(errors, "spec/numbers.json: digits must be an object")
+        return
+
+    expected_keys = {str(i) for i in range(10)}
+    actual_keys = set(digits)
+    if actual_keys != expected_keys:
+        fail(
+            errors,
+            "spec/numbers.json: digits must contain exactly 0 through 9",
+        )
+
+    values = [str(value) for value in digits.values()]
+    if len(values) != len(set(values)):
+        fail(errors, "spec/numbers.json: spoken digit names must be unique")
+
+    special = [
+        number_spec.get("decimal_separator", {}).get("spoken"),
+        number_spec.get("negative", {}).get("spoken"),
+    ]
+
+    for word in values + [str(v) for v in special if v]:
+        if not pattern.fullmatch(word):
+            fail(errors, f"spec/numbers.json: illegal spoken numeric form {word!r}")
+        if word not in accepted_words:
+            fail(
+                errors,
+                f"spec/numbers.json: spoken numeric form {word!r} is not an accepted dictionary headword",
+            )
+
+
 def main() -> int:
     errors: list[str] = []
 
-    try:
-        spec = json.loads(SPEC_PATH.read_text(encoding="utf-8"))
-    except Exception as exc:
-        print(f"ERROR: cannot load {SPEC_PATH.relative_to(ROOT)}: {exc}", file=sys.stderr)
+    spec = load_json(SPEC_PATH, errors)
+    number_spec = load_json(NUMBER_SPEC_PATH, errors)
+
+    if not spec:
+        for error in errors:
+            print(f"ERROR: {error}", file=sys.stderr)
         return 1
 
     orth = spec["orthography"]
@@ -144,6 +197,9 @@ def main() -> int:
             errors,
             f"Duplicate accepted STRING form: {value}. Resolve the collision or model related senses in one entry.",
         )
+
+    if number_spec:
+        validate_number_spec(errors, number_spec, set(accepted_words), pattern)
 
     if errors:
         for error in errors:
