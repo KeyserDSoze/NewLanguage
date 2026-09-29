@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "status": "working-standard",
+  "date": {
+    "label": "det",
+    "format": "YYYY-MM-DD",
+    "regex": "^[0-9]{4}-[0-9]{2}-[0-9]{2}$",
+    "order": ["year", "month", "day"],
+    "reading": "read each numeric group digit-by-digit; preserve group boundaries with pauses"
+  },
+  "time": {
+    "label": "tam",
+    "format": "HH:MM[:SS]",
+    "clock": "24-hour",
+    "regex": "^[0-9]{2}:[0-9]{2}(?::[0-9]{2})?$",
+    "reading": "read each numeric group digit-by-digit; preserve group boundaries with pauses"
+  },
+  "numeric_spec": "numbers.json",
+  "timezone_policy": "ISO 8601 offsets and timezone identifiers are external structured notation"
+}
