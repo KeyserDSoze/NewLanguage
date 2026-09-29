@@ -4,6 +4,25 @@ All released versions of STRING are tracked here.
 
 The canonical version is stored in `VERSION`. A release is built entirely from the repository sources at the commit associated with that version.
 
+## 0.7.0
+
+Expand everyday reference and make verb participant roles explicit:
+
+- add `tin` for thing and `yuman` for human/person;
+- add `heni` for any, `hic` for each/every, `bot` for both, and `sem` for same;
+- build someone/anyone/nobody/everyone compositionally from existing quantifiers plus `yuman`;
+- build something/anything/nothing/everything compositionally from existing quantifiers plus `tin`;
+- use `wan hader + NOUN` for another rather than adding a special article;
+- use `wat + NOUN` for ordinary what/which selection;
+- derive whose from the existing possessor pattern `hu + NOUN`;
+- derive how many as `ha meni + NOUN`;
+- add explicit direct-object and relational-complement ordering;
+- require recipient/destination `tu` instead of English-style double-object grammar;
+- clarify that `tu` is a real relation word and never an automatic infinitive marker;
+- add invariant core verb `giv`;
+- expand automated phonological tests for the new core vocabulary;
+- expand the accepted core dictionary to 90 entries.
+
 ## 0.6.0
 
 Make STRING easier to learn and make the 50,000-word pipeline sense-aware:
