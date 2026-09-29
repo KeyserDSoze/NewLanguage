@@ -76,7 +76,11 @@ Do not present a new word as accepted unless it is actually an accepted dictiona
 - `piliz` is an optional politeness marker;
 - `dat` can introduce content clauses and relative clauses;
 - `hif`, `bikaz`, and `so` combine ordinary clauses without special verb morphology;
-- English derivational and inflectional suffixes are never imported automatically.
+- English derivational and inflectional suffixes are never imported automatically;
+- `hir` and `der` are the basic here/there words, and `der bi ...` is the regular existential construction;
+- reflexives use `PRONOUN + selaf` rather than separate pronoun forms;
+- `wan hader` expresses reciprocal one-another/each-other reference;
+- dates use `det YYYY-MM-DD` and times use `tam HH:MM[:SS]`, with digit-by-digit reading from the numeric spec.
 
 Always consult the grammar chapters for exact ordering and examples.
 
