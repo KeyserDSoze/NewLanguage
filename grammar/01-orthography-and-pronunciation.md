@@ -6,27 +6,92 @@ STRING is phonemic:
 
 > Write what is pronounced. Pronounce what is written.
 
-There are no silent letters, contextual spelling rules, or alternate spellings for the same standard word.
+There are no silent letters, contextual spelling rules, or alternate standard spellings for the same word.
 
-The final alphabet must obey **one symbol = one sound**.
+Case is typographic only. The canonical dictionary stores headwords in lowercase.
 
 ## 2. Lexical relationship with English — CONFIRMED
 
 English is the primary source of lexical roots.
 
-STRING words should remain as close as practical to the **pronunciation** of the corresponding English word, not to its traditional English spelling.
+STRING follows the **pronunciation** of an English source word rather than copying its historical spelling.
 
-Examples such as English words with silent letters, irregular vowel spelling, or ambiguous consonants must be respelled according to STRING pronunciation rules.
-
-IPA is used as a technical bridge:
+The technical pipeline is:
 
 ```text
-English word → reference IPA → STRING sounds → STRING spelling
+English lemma + sense
+        ↓
+broad reference IPA
+        ↓
+STRING phoneme mapping
+        ↓
+phonotactic repair
+        ↓
+reviewed STRING word
 ```
 
-IPA is metadata and a design tool. Ordinary STRING is written with the STRING alphabet.
+IPA is metadata and a design tool. Normal STRING text is written with the STRING alphabet.
 
-## 3. Word shape — CONFIRMED
+The default technical reference is broad General American IPA. Common variants may be stored and may be used during human review when they produce a better legal STRING form.
+
+## 3. Five vowels — WORKING STANDARD
+
+STRING uses five vowel phonemes.
+
+| Letter | Target IPA | Rule |
+|---|---:|---|
+| `A` | /a/ | one open vowel |
+| `E` | /e/ | one mid-front vowel |
+| `I` | /i/ | one high-front vowel |
+| `O` | /o/ | one mid/back rounded vowel |
+| `U` | /u/ | one high-back rounded vowel |
+
+English vowel distinctions are intentionally compressed into these five vowels.
+
+Examples of the normalization groups:
+
+- English /i, ɪ/ → `I`
+- English /e, ɛ, eɪ/ → `E`
+- English /æ, ʌ, ə/ → `A`
+- English /ɑ, ɒ, ɔ, oʊ/ → `O`
+- English /u, ʊ/ → `U`
+
+English diphthongs do not remain diphthongs in STRING. They collapse to one STRING vowel.
+
+## 4. Consonants — WORKING STANDARD
+
+Each consonant letter has one phonemic value.
+
+| Letter | IPA |
+|---|---:|
+| `B` | /b/ |
+| `C` | /tʃ/ |
+| `D` | /d/ |
+| `F` | /f/ |
+| `G` | /g/ |
+| `H` | /h/ |
+| `J` | /dʒ/ |
+| `K` | /k/ |
+| `L` | /l/ |
+| `M` | /m/ |
+| `N` | /n/ |
+| `P` | /p/ |
+| `R` | /ɹ/ |
+| `S` | /s/ |
+| `T` | /t/ |
+| `V` | /v/ |
+| `W` | /w/ |
+| `X` | /ʃ/ |
+| `Y` | /j/ |
+| `Z` | /z/ |
+
+`Q` is not currently part of the STRING alphabet.
+
+The English sounds /θ/ and /ð/ normalize to `T` and `D`. English /ŋ/ normalizes to `N`. English /ʒ/ normalizes to `J`.
+
+Accent variation is acceptable in ordinary speech as long as speakers preserve the phonemic distinctions of STRING. Accent never changes spelling.
+
+## 5. Word shape — CONFIRMED
 
 The canonical STRING word shape is:
 
@@ -36,59 +101,89 @@ The canonical STRING word shape is:
 
 Where:
 
-- `C` = one consonant;
-- `V` = one vowel;
+- `C` = one STRING consonant;
+- `V` = one STRING vowel;
 - `+` = one or more CV units;
 - `C?` = zero or one final consonant.
 
-Examples:
+Examples of legal shapes:
 
-- `DARU` = DA-RU
-- `MALU` = MA-LU
-- `CAMU` = CA-MU
-- `MAR` = MA-R
+- `daru` = DA-RU
+- `malu` = MA-LU
+- `camu` = CA-MU
+- `mar` = MA-R
+- `not` = NO-T
+- `hav` = HA-V
 
-A final consonant is allowed when it produces a shorter or more natural-sounding word.
+A final consonant is part of the word. It is never an optional pronunciation.
 
-The final consonant is not optional in pronunciation. `MAR` and `MARU` would be different written forms and therefore different pronunciations.
+## 6. Forbidden structures — CONFIRMED
 
-## 4. Forbidden structures — CONFIRMED
-
-Standard STRING words do not contain:
+A standard STRING word does not contain:
 
 - adjacent vowels;
-- diphthongs as two-vowel sequences;
-- internal consonant clusters;
-- silent letters;
-- letters whose pronunciation changes from word to word.
+- an internal consonant cluster;
+- a silent letter;
+- a contextual letter pronunciation;
+- stress-based lexical distinctions;
+- pronunciation differences encoded only by capitalization.
 
-The normalization process must repair an English source pronunciation when it would create one of these structures.
+## 7. Vowel-initial English words — WORKING STANDARD
 
-## 5. English recognition versus regularity — CONFIRMED
+Because STRING syllables require a consonant onset, a mechanical candidate derived from an English vowel-initial word receives audible `H`.
 
-The lexical design priority is:
+For example, a source beginning with /æ/ begins mechanically as `HA...`.
 
-1. deterministic STRING pronunciation;
-2. legal STRING word shape;
-3. closeness to recognizable English pronunciation;
-4. short and pleasant sound;
-5. closeness to English spelling.
+This is a repair sound, not a silent carrier.
 
-This means a STRING form may differ substantially from English spelling while remaining recognizably related to its sound.
+## 8. Consonant-cluster repair — WORKING STANDARD
 
-## 6. Reference accent and phoneme mapping — PROVISIONAL
+English consonant clusters are repaired mechanically before review.
 
-The dictionary will store a normalized reference IPA pronunciation for each English source sense. Common pronunciation variants may also be stored.
+When a cluster is followed by a vowel, the generator copies that next STRING vowel as needed to create CV units.
 
-Before mass-generating the 50,000-word dictionary, the project must freeze:
+Example mechanical candidate:
 
-- the STRING vowel inventory;
-- the STRING consonant inventory;
-- the exact letter-to-sound table;
-- rules for English sounds absent from STRING;
-- rules for English vowel-initial words;
-- rules for English diphthongs;
-- rules for consonant clusters;
-- collision rules when two English words normalize to the same STRING form.
+```text
+English "string" /strɪŋ/
+S T R I N
+→ SI-TI-RI-N
+→ sitirin
+```
 
-No automatically generated lexical form becomes normative until it passes these rules.
+When a cluster has no following vowel, `A` is the default repair vowel while preserving at most one final consonant.
+
+Example:
+
+```text
+English "work" /wɝk/
+W E R K
+→ WE-RA-K
+→ werak
+```
+
+Mechanical candidates are reproducible but are **not automatically dictionary words**.
+
+## 9. Human lexical review — CONFIRMED
+
+A reviewer may shorten a mechanical candidate when the shorter form:
+
+1. still resembles a recognizable English pronunciation;
+2. obeys the current STRING alphabet;
+3. obeys `(CV)+C?`;
+4. creates no silent spelling;
+5. does not create an accidental collision with an accepted word.
+
+A reviewer may also select a documented English pronunciation variant.
+
+The accepted STRING spelling remains fully phonemic even when it differs from the mechanical candidate.
+
+## 10. Machine-readable authority
+
+The current alphabet and normalization tables are mirrored in:
+
+```text
+spec/phonology.json
+```
+
+Dictionary validation and future lexical generation use that file directly.
