@@ -1,8 +1,12 @@
 #!/usr/bin/env python3
 """Generate sense-aware English -> STRING candidate forms.
 
-Open English WordNet provides lemma/POS/sense inventory, wordfreq provides
-review priority, and CMUdict provides reference pronunciation.
+Open English WordNet provides lemma/sense inventory, wordfreq provides review
+priority, and CMUdict provides reference pronunciation.
+
+One candidate row represents one English lemma and can contain multiple parts
+of speech and senses. Review may later split unrelated senses into distinct
+STRING entries.
 
 This script never modifies dictionary/entries.jsonl and never accepts words.
 """
@@ -127,18 +131,29 @@ def ensure_cmudict(path: Path) -> None:
         path.write_bytes(response.read())
 
 
-def accepted_headwords() -> dict[str, list[str]]:
+def accepted_index() -> tuple[dict[str, list[dict]], dict[str, list[dict]]]:
     path = ROOT / "dictionary" / "entries.jsonl"
-    result: dict[str, list[str]] = defaultdict(list)
+    by_string: dict[str, list[dict]] = defaultdict(list)
+    by_english: dict[str, list[dict]] = defaultdict(list)
 
     for raw in path.read_text(encoding="utf-8").splitlines():
         if not raw.strip():
             continue
         item = json.loads(raw)
-        if item.get("status") == "accepted" and item.get("string"):
-            result[item["string"]].append(item.get("english", item["id"]))
+        if item.get("status") != "accepted" or not item.get("string"):
+            continue
 
-    return dict(result)
+        record = {
+            "id": item.get("id"),
+            "english": str(item.get("english", "")).lower(),
+            "string": item["string"],
+            "sense_id": item.get("sense_id"),
+            "part_of_speech": item.get("part_of_speech"),
+        }
+        by_string[item["string"]].append(record)
+        by_english[record["english"]].append(record)
+
+    return dict(by_string), dict(by_english)
 
 
 def lexical_inventory() -> list[dict]:
@@ -148,50 +163,87 @@ def lexical_inventory() -> list[dict]:
     from wordfreq import zipf_frequency
 
     wordnet = wn.Wordnet(OEWN_LEXICON)
-    inventory: dict[tuple[str, str], dict] = {}
+    inventory: dict[str, dict] = {}
+    inflected_form_of: dict[str, set[str]] = defaultdict(set)
 
-    for word in wordnet.words():
+    words = wordnet.words()
+
+    # Identify strings whose wordfreq score may be inflated because the same
+    # spelling is an inflected form of another lemma (e.g. "are" <- "be").
+    for word in words:
         lemma = word.lemma().lower()
-        pos = word.pos
-
-        # The first 50k target is single-word core vocabulary. Multiword
-        # expressions are handled compositionally first.
         if not ASCII_WORD.fullmatch(lemma):
             continue
+        for form in word.forms():
+            surface = form.lower()
+            if (
+                surface != lemma
+                and ASCII_WORD.fullmatch(surface)
+                and len(surface) >= 2
+            ):
+                inflected_form_of[surface].add(lemma)
 
-        key = (lemma, pos)
+    for word in words:
+        lemma = word.lemma().lower()
+        if not ASCII_WORD.fullmatch(lemma) or len(lemma) < 2:
+            continue
+
         record = inventory.setdefault(
-            key,
+            lemma,
             {
                 "english": lemma,
-                "part_of_speech": pos,
+                "parts_of_speech": set(),
                 "zipf_frequency": zipf_frequency(lemma, "en"),
                 "wordnet_word_ids": [],
                 "senses": [],
             },
         )
+        record["parts_of_speech"].add(word.pos)
         record["wordnet_word_ids"].append(word.id)
 
         known_sense_ids = {sense["sense_id"] for sense in record["senses"]}
         for sense in word.senses():
             if sense.id in known_sense_ids:
                 continue
+
             synset = sense.synset()
-            definition = synset.definition() or ""
+            try:
+                sense_count = sum(sense.counts())
+            except Exception:
+                sense_count = 0
+
             record["senses"].append(
                 {
                     "sense_id": sense.id,
                     "synset_id": synset.id,
-                    "definition_en": definition,
+                    "part_of_speech": word.pos,
+                    "definition_en": synset.definition() or "",
+                    "corpus_count": sense_count,
                 }
             )
 
-    records = list(inventory.values())
+    records: list[dict] = []
+    for lemma, record in inventory.items():
+        contaminators = sorted(inflected_form_of.get(lemma, set()))
+        raw_zipf = float(record["zipf_frequency"])
+
+        # This penalty affects review order only. It does not delete the
+        # legitimate homographic lemma or change its recorded wordfreq value.
+        effective_zipf = raw_zipf - (1.5 if contaminators else 0.0)
+
+        record["parts_of_speech"] = sorted(record["parts_of_speech"])
+        record["also_inflected_form_of"] = contaminators
+        record["ranking_zipf_frequency"] = effective_zipf
+        record["sense_corpus_count"] = sum(
+            int(sense.get("corpus_count", 0)) for sense in record["senses"]
+        )
+        records.append(record)
+
     records.sort(
         key=lambda item: (
-            -float(item["zipf_frequency"]),
+            -float(item["ranking_zipf_frequency"]),
+            -int(item["sense_corpus_count"]),
             item["english"],
-            item["part_of_speech"],
         )
     )
     return records
@@ -199,8 +251,8 @@ def lexical_inventory() -> list[dict]:
 
 def build_candidates(limit: int, cmudict_path: Path) -> tuple[list[dict], dict]:
     pronunciations = load_cmudict(cmudict_path)
-    accepted = accepted_headwords()
-    generated_by_form: dict[str, list[dict]] = defaultdict(list)
+    accepted_by_string, accepted_by_english = accepted_index()
+    generated_by_form: dict[str, list[str]] = defaultdict(list)
 
     inventory = lexical_inventory()
     selected = inventory[:limit]
@@ -208,25 +260,29 @@ def build_candidates(limit: int, cmudict_path: Path) -> tuple[list[dict], dict]:
     output: list[dict] = []
     with_pronunciation = 0
     unsupported = 0
-    accepted_collisions = 0
+    already_accepted = 0
+    true_accepted_collisions = 0
     candidate_collisions = 0
 
     for rank, lexical in enumerate(selected, start=1):
         english = lexical["english"]
-        pos = lexical["part_of_speech"]
         variants = pronunciations.get(english, [])
         senses = lexical["senses"]
+
+        accepted_matches = accepted_by_english.get(english, [])
 
         row = {
             "frequency_rank": rank,
             "english": english,
-            "part_of_speech": pos,
+            "parts_of_speech": lexical["parts_of_speech"],
             "zipf_frequency": lexical["zipf_frequency"],
+            "ranking_zipf_frequency": lexical["ranking_zipf_frequency"],
+            "also_inflected_form_of": lexical["also_inflected_form_of"],
+            "sense_corpus_count": lexical["sense_corpus_count"],
             "wordnet_word_ids": lexical["wordnet_word_ids"],
             "senses": senses,
-            "sense_id": senses[0]["sense_id"] if senses else None,
-            "definition_en": senses[0]["definition_en"] if senses else "",
-            "source_status": "oewn-lemma-pos",
+            "accepted_matches": accepted_matches,
+            "source_status": "oewn-lemma",
             "cmudict_pronunciations": variants,
             "ipa_variants": [],
             "ipa_reference": None,
@@ -243,27 +299,35 @@ def build_candidates(limit: int, cmudict_path: Path) -> tuple[list[dict], dict]:
                 candidate, segments = normalize("/" + ipa_reference + "/")
 
                 collisions = []
-                for existing in accepted.get(candidate, []):
+                for existing in accepted_by_string.get(candidate, []):
+                    if existing["english"] == english:
+                        continue
                     collisions.append(
                         {
-                            "type": "accepted",
-                            "english": existing,
+                            "type": "accepted-different-lemma",
+                            "id": existing["id"],
+                            "english": existing["english"],
                             "string": candidate,
                         }
                     )
-                    accepted_collisions += 1
+                    true_accepted_collisions += 1
 
                 for previous in generated_by_form.get(candidate, []):
+                    if previous == english:
+                        continue
                     collisions.append(
                         {
-                            "type": "candidate",
-                            "english": previous["english"],
-                            "part_of_speech": previous["part_of_speech"],
-                            "same_english_lemma": previous["english"] == english,
+                            "type": "candidate-different-lemma",
+                            "english": previous,
                             "string": candidate,
                         }
                     )
                     candidate_collisions += 1
+
+                review_status = "candidate"
+                if accepted_matches:
+                    review_status = "already-accepted"
+                    already_accepted += 1
 
                 row.update(
                     {
@@ -272,12 +336,10 @@ def build_candidates(limit: int, cmudict_path: Path) -> tuple[list[dict], dict]:
                         "mechanical_string": candidate,
                         "string_segments": segments,
                         "collisions": collisions,
-                        "review_status": "candidate",
+                        "review_status": review_status,
                     }
                 )
-                generated_by_form[candidate].append(
-                    {"english": english, "part_of_speech": pos}
-                )
+                generated_by_form[candidate].append(english)
                 with_pronunciation += 1
             except ValueError as exc:
                 row["review_status"] = "unsupported-pronunciation"
@@ -288,13 +350,14 @@ def build_candidates(limit: int, cmudict_path: Path) -> tuple[list[dict], dict]:
 
     meta = {
         "project": "STRING",
-        "purpose": "sense-aware review candidates; never normative automatically",
+        "purpose": "sense-aware lemma review candidates; never normative automatically",
         "requested_limit": limit,
-        "available_single_word_lemma_pos_records": len(inventory),
+        "available_single_word_lemmas": len(inventory),
         "generated_rows": len(output),
         "rows_with_string_candidate": with_pronunciation,
+        "already_accepted_lemmas": already_accepted,
         "unsupported_pronunciation_rows": unsupported,
-        "accepted_collision_events": accepted_collisions,
+        "true_accepted_collision_events": true_accepted_collisions,
         "candidate_collision_events": candidate_collisions,
         "wordfreq_version": WORDFREQ_VERSION,
         "wn_version": WN_VERSION,
@@ -302,6 +365,10 @@ def build_candidates(limit: int, cmudict_path: Path) -> tuple[list[dict], dict]:
         "cmudict_repository": "cmusphinx/cmudict",
         "cmudict_commit": CMUDICT_COMMIT,
         "cmudict_url": CMUDICT_URL,
+        "ranking_note": (
+            "wordfreq ranks lemmas; forms also detected as inflections of another "
+            "lemma receive a transparent 1.5 Zipf review-order penalty"
+        ),
     }
     return output, meta
 
