@@ -37,9 +37,11 @@ STRING uses **wordfreq 3.1.1** as a reproducible frequency signal.
 
 Role:
 
-- estimate which English lexical forms are common;
+- estimate which English lemma spellings are common;
 - prioritize review order;
 - help rank candidate lemmas.
+
+The generator ranks **unique lemmas**, not separate lemma+POS rows. All Open English WordNet parts of speech and senses for the same spelling travel together into review. This prevents a single English word from consuming several positions in the 50,000-word target.
 
 Important licensing rule:
 
@@ -113,3 +115,14 @@ Generator dependencies are pinned.
 Generated candidate files are build artifacts. They are not automatically canonical dictionary content.
 
 Only explicitly reviewed records added to `dictionary/entries.jsonl` can become `accepted`.
+
+
+## Frequency contamination by English inflection
+
+A spelling can be both a rare dictionary lemma and a very common inflected form of another word. For example, a lexical entry spelled like an English auxiliary form can inherit that auxiliary's very high surface frequency.
+
+The generator detects when a candidate lemma also appears as a non-lemma form of another Open English WordNet word. It records those source lemmas in `also_inflected_form_of` and applies a transparent ranking penalty.
+
+This affects review order only. It never deletes the legitimate homographic sense.
+
+Accepted STRING core lemmas are classified as `already-accepted` instead of being counted as collisions with themselves.
