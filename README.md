@@ -1,6 +1,6 @@
 # STRING
 
-**STRING** is an experimental universal language designed to be simple to learn, fast to use, predictable to pronounce, and easy for both humans and machines to process.
+**STRING** is an experimental universal language designed to be simple to learn, fast to use, predictable to pronounce, and easy for both humans and machines to process. **STRING is the external project name**, not currently a canonical in-language lexical form; an internal autonym may be chosen separately.
 
 The project starts from an older language design and rebuilds it around two strict principles:
 
