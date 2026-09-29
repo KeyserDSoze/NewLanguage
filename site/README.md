@@ -1,26 +1,42 @@
-# Static Site
+# STRING Static Site
 
-This directory is reserved for the public STRING website.
+The public website is generated from the same canonical sources as the books and dictionary exports.
 
-The site will be published through GitHub Pages and will expose the same canonical sources used for the books and machine-readable dictionary.
+Nothing inside the generated `public/` directory is maintained manually.
 
-## Planned sections
+## Generator
+
+```text
+scripts/build_site.py
+```
+
+It reads:
+
+- `VERSION`;
+- accepted entries from `dictionary/entries.jsonl`;
+- generated grammar source assembled by `scripts/build_books.py`.
+
+Pandoc renders the assembled grammar to HTML.
+
+## Published sections
 
 - project introduction;
-- complete grammar;
-- pronunciation guide;
-- searchable dictionary;
-- English → STRING lookup;
-- STRING → English lookup;
-- entry pages showing English lemma, IPA source pronunciation, STRING form, part of speech, definition, and status;
-- downloadable PDF and EPUB editions.
+- full generated grammar;
+- searchable accepted dictionary;
+- links to versioned GitHub Releases;
+- links back to the source repository.
 
-## Search architecture
+Dictionary search runs entirely in the browser and requires no server.
 
-The dictionary should remain usable as a static website.
+## GitHub Pages
 
-A build step will generate a compact client-side search index from the canonical dictionary data. No server is required for normal lookup.
+`.github/workflows/pages.yml` rebuilds and deploys the site from `main` when language sources change.
 
-## Single-source principle
+The deployment uses the official GitHub Pages Actions flow:
 
-Grammar, website, PDF, EPUB, and machine-readable exports must be generated from shared source files so that the project cannot drift into multiple incompatible versions.
+- `actions/checkout@v6`;
+- `actions/configure-pages@v5`;
+- `actions/upload-pages-artifact@v4`;
+- `actions/deploy-pages@v4`.
+
+The repository must have GitHub Pages configured to use **GitHub Actions** as its publishing source.
