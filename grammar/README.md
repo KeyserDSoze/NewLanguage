@@ -48,5 +48,7 @@ Machine-readable working standards live in `spec/`, including phonology and cano
 - `14-modality-necessity-advice-and-intention.md`
 - `15-indefinite-reference-and-selection.md`
 - `16-verb-complements-and-semantic-roles.md`
+- `17-canonical-noun-phrase-order.md`
+- `18-canonical-clause-and-predicate-order.md`
 
 The book pipeline discovers numbered grammar chapters automatically, so adding a new chapter to this directory adds it to the next generated grammar publication.
