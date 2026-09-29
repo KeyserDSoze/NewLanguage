@@ -4,6 +4,20 @@ All released versions of STRING are tracked here.
 
 The canonical version is stored in `VERSION`. A release is built entirely from the repository sources at the commit associated with that version.
 
+## 0.8.0-dev
+
+Current development cycle after stable `v0.7.0`:
+
+- define one canonical noun-phrase order: selector → possessor → quantity → modifier(s) → noun → relative clause;
+- define one canonical predicate/operator order for tense, modality, perfect, progressive, lexical verb, object, and relational phrases;
+- clarify negation scope by placing `not` immediately before the predicate element it negates;
+- distinguish the external project name **STRING** from canonical in-language lexical forms;
+- add focused collision and pronunciation review queues to dictionary candidate artifacts;
+- add a dedicated full dictionary-generation workflow;
+- request the first full 50,000-lemma candidate analysis;
+- introduce explicit development versions such as `0.8.0-dev`;
+- restrict GitHub tags and Releases to stable `X.Y.Z` versions only.
+
 ## 0.7.0
 
 Expand everyday reference and make verb participant roles explicit:
