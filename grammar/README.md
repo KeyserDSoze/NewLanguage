@@ -46,5 +46,7 @@ Machine-readable working standards live in `spec/`, including phonology and cano
 - `12-dates-time-and-structured-notation.md`
 - `13-core-sentence-patterns.md`
 - `14-modality-necessity-advice-and-intention.md`
+- `15-indefinite-reference-and-selection.md`
+- `16-verb-complements-and-semantic-roles.md`
 
 The book pipeline discovers numbered grammar chapters automatically, so adding a new chapter to this directory adds it to the next generated grammar publication.
