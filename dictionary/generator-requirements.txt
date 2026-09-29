@@ -1,2 +1,2 @@
-wordfreq==3.2.0
+wordfreq==3.1.1
 wn==1.1.1
