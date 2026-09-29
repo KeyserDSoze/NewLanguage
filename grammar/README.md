@@ -40,5 +40,7 @@ Machine-readable working standards live in `spec/`, including phonology and cano
 - `06-prepositions-and-conjunctions.md`
 - `07-numbers.md`
 - `08-writing-proper-names-and-compounds.md`
+- `09-commands-and-complex-sentences.md`
+- `10-word-classes-and-word-formation.md`
 
 The book pipeline discovers numbered grammar chapters automatically, so adding a new chapter to this directory adds it to the next generated grammar publication.
