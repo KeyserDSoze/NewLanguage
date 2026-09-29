@@ -7,6 +7,12 @@ on:
     tags:
       - "v*"
   workflow_dispatch:
+    inputs:
+      release:
+        description: "Publish the current VERSION as a GitHub Release"
+        required: false
+        default: false
+        type: boolean
 
 permissions:
   contents: read
@@ -73,13 +79,39 @@ jobs:
         run: |
           VERSION="${{ steps.version.outputs.version }}"
 
-          pandoc "build/string-grammar.md"             --standalone             --toc             --metadata title="STRING Grammar"             --metadata subtitle="Version ${VERSION}"             -o "dist/STRING-Grammar-v${VERSION}.epub"
+          pandoc "build/string-grammar.md" \
+            --standalone \
+            --toc \
+            --metadata title="STRING Grammar" \
+            --metadata subtitle="Version ${VERSION}" \
+            -o "dist/STRING-Grammar-v${VERSION}.epub"
 
-          pandoc "build/string-grammar.md"             --standalone             --toc             --pdf-engine=xelatex             -V mainfont="DejaVu Serif"             -V geometry:margin=25mm             --metadata title="STRING Grammar"             --metadata subtitle="Version ${VERSION}"             -o "dist/STRING-Grammar-v${VERSION}.pdf"
+          pandoc "build/string-grammar.md" \
+            --standalone \
+            --toc \
+            --pdf-engine=xelatex \
+            -V mainfont="DejaVu Serif" \
+            -V geometry:margin=25mm \
+            --metadata title="STRING Grammar" \
+            --metadata subtitle="Version ${VERSION}" \
+            -o "dist/STRING-Grammar-v${VERSION}.pdf"
 
-          pandoc "build/string-dictionary.md"             --standalone             --toc             --metadata title="STRING Dictionary"             --metadata subtitle="Version ${VERSION}"             -o "dist/STRING-Dictionary-v${VERSION}.epub"
+          pandoc "build/string-dictionary.md" \
+            --standalone \
+            --toc \
+            --metadata title="STRING Dictionary" \
+            --metadata subtitle="Version ${VERSION}" \
+            -o "dist/STRING-Dictionary-v${VERSION}.epub"
 
-          pandoc "build/string-dictionary.md"             --standalone             --toc             --pdf-engine=xelatex             -V mainfont="DejaVu Serif"             -V geometry:margin=25mm             --metadata title="STRING Dictionary"             --metadata subtitle="Version ${VERSION}"             -o "dist/STRING-Dictionary-v${VERSION}.pdf"
+          pandoc "build/string-dictionary.md" \
+            --standalone \
+            --toc \
+            --pdf-engine=xelatex \
+            -V mainfont="DejaVu Serif" \
+            -V geometry:margin=25mm \
+            --metadata title="STRING Dictionary" \
+            --metadata subtitle="Version ${VERSION}" \
+            -o "dist/STRING-Dictionary-v${VERSION}.pdf"
 
       - name: Create checksums
         shell: bash
@@ -87,7 +119,14 @@ jobs:
           VERSION="${{ steps.version.outputs.version }}"
           (
             cd dist
-            sha256sum               "STRING-Grammar-v${VERSION}.pdf"               "STRING-Grammar-v${VERSION}.epub"               "STRING-Dictionary-v${VERSION}.pdf"               "STRING-Dictionary-v${VERSION}.epub"               "STRING-Dictionary-v${VERSION}.jsonl"               "BUILD-MANIFEST-v${VERSION}.json"               > "SHA256SUMS-v${VERSION}.txt"
+            sha256sum \
+              "STRING-Grammar-v${VERSION}.pdf" \
+              "STRING-Grammar-v${VERSION}.epub" \
+              "STRING-Dictionary-v${VERSION}.pdf" \
+              "STRING-Dictionary-v${VERSION}.epub" \
+              "STRING-Dictionary-v${VERSION}.jsonl" \
+              "BUILD-MANIFEST-v${VERSION}.json" \
+              > "SHA256SUMS-v${VERSION}.txt"
           )
 
       - name: Upload build artifact
@@ -108,7 +147,10 @@ jobs:
       startsWith(github.ref, 'refs/tags/v') ||
       (github.event_name == 'push' &&
        github.ref == 'refs/heads/main' &&
-       needs.build.outputs.version_changed == 'true')
+       needs.build.outputs.version_changed == 'true') ||
+      (github.event_name == 'workflow_dispatch' &&
+       github.ref == 'refs/heads/main' &&
+       inputs.release == true)
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -125,11 +167,9 @@ jobs:
           name: string-v${{ needs.build.outputs.version }}
           path: dist
 
-      - name: Create version tag when VERSION changed on main
+      - name: Create immutable version tag
         if: github.ref == 'refs/heads/main'
         shell: bash
-        env:
-          GH_TOKEN: ${{ github.token }}
         run: |
           VERSION="${{ needs.build.outputs.version }}"
           TAG="v${VERSION}"
@@ -158,5 +198,7 @@ jobs:
           if gh release view "$TAG" >/dev/null 2>&1; then
             gh release upload "$TAG" dist/* --clobber
           else
-            gh release create "$TAG" dist/*               --title "STRING $TAG"               --generate-notes
+            gh release create "$TAG" dist/* \
+              --title "STRING $TAG" \
+              --generate-notes
           fi
