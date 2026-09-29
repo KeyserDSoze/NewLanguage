@@ -57,16 +57,31 @@ Every push to `main` validates the language and builds the current publications 
 
 The canonical project version is stored in `VERSION` and follows semantic versioning.
 
-A release version is immutable:
+Development versions use a suffix such as:
 
-1. update the canonical source files;
-2. update `VERSION` when the contribution set is ready to become a release;
-3. push to `main`;
-4. GitHub Actions rebuilds everything;
-5. the workflow creates tag `vX.Y.Z`;
-6. the generated PDF, EPUB, dictionary data, build manifest, and checksums are attached to the GitHub Release.
+```text
+0.8.0-dev
+```
 
-The workflow can also be started manually from GitHub Actions with **Publish the current VERSION** enabled. This is useful for publishing a version whose `VERSION` file already existed before the release pipeline.
+They are built, validated, and published to the development website, but they **cannot create a GitHub Release or version tag**.
+
+A stable release version has exactly the form:
+
+```text
+X.Y.Z
+```
+
+A stable release is immutable:
+
+1. develop on `main` under the next `X.Y.Z-dev` version;
+2. update canonical grammar, dictionary, spec, tests, and prompts;
+3. when the contribution set is ready, change `VERSION` from `X.Y.Z-dev` to `X.Y.Z`;
+4. GitHub Actions validates and rebuilds everything;
+5. the workflow creates immutable tag `vX.Y.Z`;
+6. the generated PDF, EPUB, dictionary data, machine-readable spec, build manifest, and checksums are attached to the GitHub Release;
+7. subsequent development moves to the next `X.Y.Z-dev` version.
+
+Manual release dispatch is also restricted to stable `X.Y.Z` versions.
 
 Generated output is intentionally ignored by Git. A release can always be reproduced from its tag and source commit.
 
