@@ -299,35 +299,40 @@ def build_candidates(limit: int, cmudict_path: Path) -> tuple[list[dict], dict]:
                 candidate, segments = normalize("/" + ipa_reference + "/")
 
                 collisions = []
-                for existing in accepted_by_string.get(candidate, []):
-                    if existing["english"] == english:
-                        continue
-                    collisions.append(
-                        {
-                            "type": "accepted-different-lemma",
-                            "id": existing["id"],
-                            "english": existing["english"],
-                            "string": candidate,
-                        }
-                    )
-                    true_accepted_collisions += 1
-
-                for previous in generated_by_form.get(candidate, []):
-                    if previous == english:
-                        continue
-                    collisions.append(
-                        {
-                            "type": "candidate-different-lemma",
-                            "english": previous,
-                            "string": candidate,
-                        }
-                    )
-                    candidate_collisions += 1
-
                 review_status = "candidate"
+
                 if accepted_matches:
+                    # This English lemma is already standardized. Keep the
+                    # mechanical form for audit/debugging, but do not let it
+                    # create collision events: its lexical decision is already
+                    # represented by the accepted dictionary entry.
                     review_status = "already-accepted"
                     already_accepted += 1
+                else:
+                    for existing in accepted_by_string.get(candidate, []):
+                        if existing["english"] == english:
+                            continue
+                        collisions.append(
+                            {
+                                "type": "accepted-different-lemma",
+                                "id": existing["id"],
+                                "english": existing["english"],
+                                "string": candidate,
+                            }
+                        )
+                        true_accepted_collisions += 1
+
+                    for previous in generated_by_form.get(candidate, []):
+                        if previous == english:
+                            continue
+                        collisions.append(
+                            {
+                                "type": "candidate-different-lemma",
+                                "english": previous,
+                                "string": candidate,
+                            }
+                        )
+                        candidate_collisions += 1
 
                 row.update(
                     {
@@ -339,7 +344,10 @@ def build_candidates(limit: int, cmudict_path: Path) -> tuple[list[dict], dict]:
                         "review_status": review_status,
                     }
                 )
-                generated_by_form[candidate].append(english)
+
+                if review_status == "candidate":
+                    generated_by_form[candidate].append(english)
+
                 with_pronunciation += 1
             except ValueError as exc:
                 row["review_status"] = "unsupported-pronunciation"
