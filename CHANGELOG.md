@@ -4,6 +4,23 @@ All released versions of STRING are tracked here.
 
 The canonical version is stored in `VERSION`. A release is built entirely from the repository sources at the commit associated with that version.
 
+## 0.5.0
+
+Add compact reference grammar and universal structured time notation:
+
+- add `hir` and `der` for here/there;
+- define regular existential clauses with `der bi ...`;
+- reuse normal negation and question inversion for existential clauses;
+- add `selaf` and build all reflexive forms compositionally from ordinary pronouns;
+- add `hader` and `wan hader` for other and reciprocal reference;
+- allow `de` as a generic human/agentive "they" where this avoids unnecessary passive morphology;
+- keep declarative subjects explicit except in commands and clear same-subject coordination;
+- define ISO-style `det YYYY-MM-DD` dates;
+- define 24-hour `tam HH:MM[:SS]` clock notation;
+- add machine-readable `spec/datetime.json`;
+- add deterministic date/time reading with calendar-value validation;
+- expand the accepted core dictionary to 79 entries.
+
 ## 0.4.0
 
 Extend STRING into a more complete usable language and prepare large-scale lexical generation:
