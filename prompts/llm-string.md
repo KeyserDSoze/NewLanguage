@@ -71,7 +71,12 @@ Do not present a new word as accepted unless it is actually an accepted dictiona
 - punctuation is structural and does not alter word pronunciation;
 - fully adapted proper names follow STRING phonology;
 - opaque identifiers such as URLs, email addresses, usernames, and code may remain external tokens;
-- compounds should remain transparent multi-word expressions until lexicalization is justified.
+- compounds should remain transparent multi-word expressions until lexicalization is justified;
+- a bare predicate forms a direct command, and `not` forms a negative command;
+- `piliz` is an optional politeness marker;
+- `dat` can introduce content clauses and relative clauses;
+- `hif`, `bikaz`, and `so` combine ordinary clauses without special verb morphology;
+- English derivational and inflectional suffixes are never imported automatically.
 
 Always consult the grammar chapters for exact ordering and examples.
 
