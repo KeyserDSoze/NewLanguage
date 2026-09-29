@@ -4,6 +4,22 @@ All released versions of STRING are tracked here.
 
 The canonical version is stored in `VERSION`. A release is built entirely from the repository sources at the commit associated with that version.
 
+## 0.3.0
+
+Expand the minimal grammar beyond the core clause:
+
+- add invariant modifier rules;
+- add explicit quantifiers without noun plural inflection;
+- replace comparative and superlative endings with `mor`, `les`, `mos`, and `lis`;
+- add `dan` for explicit comparison targets;
+- define a deliberately small core preposition inventory;
+- use `not` compositionally instead of creating separate negative prepositions;
+- prefer compositional complex relations over a large memorized preposition list;
+- add temporal relations using the same invariant relation grammar;
+- add core conjunctions for coordination, conditions, reasons, and results;
+- add accepted dictionary entries for the new grammar vocabulary;
+- update the generated grammar book and searchable dictionary automatically.
+
 ## 0.2.0
 
 First executable language standard:
