@@ -1,0 +1,135 @@
+{
+  "schema_version": 1,
+  "status": "working-standard",
+  "reference_english": {
+    "accent": "General American",
+    "transcription": "broad IPA",
+    "variant_policy": "Store common variants when materially different; ipa_reference is the deterministic generation input."
+  },
+  "orthography": {
+    "canonical_case": "lowercase",
+    "case_is_phonemic": false,
+    "vowels": ["a", "e", "i", "o", "u"],
+    "consonants": ["b", "c", "d", "f", "g", "h", "j", "k", "l", "m", "n", "p", "r", "s", "t", "v", "w", "x", "y", "z"],
+    "word_shape": "(CV)+C?",
+    "word_pattern": "^(?:[bcdfghjklmnprstvwxyz][aeiou])+(?:[bcdfghjklmnprstvwxyz])?$"
+  },
+  "letters": [
+    {"letter": "a", "class": "vowel", "ipa": "a"},
+    {"letter": "e", "class": "vowel", "ipa": "e"},
+    {"letter": "i", "class": "vowel", "ipa": "i"},
+    {"letter": "o", "class": "vowel", "ipa": "o"},
+    {"letter": "u", "class": "vowel", "ipa": "u"},
+
+    {"letter": "b", "class": "consonant", "ipa": "b"},
+    {"letter": "c", "class": "consonant", "ipa": "tʃ"},
+    {"letter": "d", "class": "consonant", "ipa": "d"},
+    {"letter": "f", "class": "consonant", "ipa": "f"},
+    {"letter": "g", "class": "consonant", "ipa": "g"},
+    {"letter": "h", "class": "consonant", "ipa": "h"},
+    {"letter": "j", "class": "consonant", "ipa": "dʒ"},
+    {"letter": "k", "class": "consonant", "ipa": "k"},
+    {"letter": "l", "class": "consonant", "ipa": "l"},
+    {"letter": "m", "class": "consonant", "ipa": "m"},
+    {"letter": "n", "class": "consonant", "ipa": "n"},
+    {"letter": "p", "class": "consonant", "ipa": "p"},
+    {"letter": "r", "class": "consonant", "ipa": "ɹ"},
+    {"letter": "s", "class": "consonant", "ipa": "s"},
+    {"letter": "t", "class": "consonant", "ipa": "t"},
+    {"letter": "v", "class": "consonant", "ipa": "v"},
+    {"letter": "w", "class": "consonant", "ipa": "w"},
+    {"letter": "x", "class": "consonant", "ipa": "ʃ"},
+    {"letter": "y", "class": "consonant", "ipa": "j"},
+    {"letter": "z", "class": "consonant", "ipa": "z"}
+  ],
+  "english_ipa_normalization": {
+    "longest_match_first": true,
+    "ignore": ["ˈ", "ˌ", "ː", ".", " ", "/", "[", "]"],
+    "map": {
+      "tʃ": "c",
+      "dʒ": "j",
+
+      "eɪ": "e",
+      "aɪ": "a",
+      "aʊ": "a",
+      "oʊ": "o",
+      "əʊ": "o",
+      "ɔɪ": "o",
+
+      "ɝ": "er",
+      "ɚ": "er",
+
+      "i": "i",
+      "ɪ": "i",
+      "e": "e",
+      "ɛ": "e",
+      "æ": "a",
+      "ʌ": "a",
+      "ə": "a",
+      "ɐ": "a",
+      "ɑ": "o",
+      "ɒ": "o",
+      "ɔ": "o",
+      "u": "u",
+      "ʊ": "u",
+
+      "p": "p",
+      "b": "b",
+      "t": "t",
+      "d": "d",
+      "k": "k",
+      "g": "g",
+      "f": "f",
+      "v": "v",
+      "θ": "t",
+      "ð": "d",
+      "s": "s",
+      "z": "z",
+      "ʃ": "x",
+      "ʒ": "j",
+      "h": "h",
+      "m": "m",
+      "n": "n",
+      "ŋ": "n",
+      "l": "l",
+      "ɹ": "r",
+      "r": "r",
+      "j": "y",
+      "w": "w"
+    }
+  },
+  "phonotactic_repair": {
+    "vowel_initial": {
+      "rule": "Insert h before a vowel that would otherwise begin a word.",
+      "reason": "Every STRING syllable has an audible consonant onset."
+    },
+    "vowel_hiatus": {
+      "rule": "Insert h before a vowel that would otherwise follow another vowel.",
+      "reason": "Adjacent vowels and surface diphthongs are forbidden."
+    },
+    "consonant_cluster_before_vowel": {
+      "rule": "When a consonant is followed by another consonant, pair the first consonant with the next source-derived STRING vowel visible in that cluster.",
+      "example": "strɪŋ -> sitirin"
+    },
+    "consonant_cluster_without_following_vowel": {
+      "rule": "Use a as the epenthetic vowel, preserving at most one final consonant.",
+      "example": "wɝk -> werak"
+    }
+  },
+  "review_policy": {
+    "mechanical_candidate_is_normative": false,
+    "human_review_required_for_acceptance": true,
+    "allowed_review_changes": [
+      "remove low-information sounds to shorten a word",
+      "choose among documented English pronunciation variants",
+      "add a legal CV unit to resolve a collision"
+    ],
+    "non_negotiable_after_review": [
+      "the accepted spelling must match its STRING pronunciation",
+      "the accepted form must satisfy (CV)+C?",
+      "no silent letters",
+      "no adjacent vowels",
+      "no internal consonant clusters"
+    ]
+  }
+}
