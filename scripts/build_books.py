@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Generate versioned STRING book source files from canonical repository content."""
+"""Generate versioned STRING publication sources and machine-readable exports."""
 
 from __future__ import annotations
 
@@ -45,6 +45,10 @@ def normative_grammar_files() -> list[Path]:
             continue
         files.append(path)
     return files
+
+
+def machine_spec_files() -> list[Path]:
+    return sorted((ROOT / "spec").glob("*.json"))
 
 
 def load_dictionary_entries() -> list[dict]:
@@ -156,33 +160,57 @@ def copy_dictionary_data(version: str) -> str:
     return target.name
 
 
+def build_spec_export(version: str, commit: str) -> tuple[str, list[Path]]:
+    files = machine_spec_files()
+    specs = {
+        path.stem: json.loads(path.read_text(encoding="utf-8"))
+        for path in files
+    }
+    target = DIST / f"STRING-Spec-v{version}.json"
+    target.write_text(
+        json.dumps(
+            {
+                "project": "STRING",
+                "version": version,
+                "source_commit": commit,
+                "specs": specs,
+            },
+            indent=2,
+            ensure_ascii=False,
+        ) + "\n",
+        encoding="utf-8",
+    )
+    return target.name, files
+
+
 def write_manifest(
     version: str,
     commit: str,
     grammar_sources: list[Path],
+    spec_sources: list[Path],
     accepted_entries: int,
     dictionary_data: str,
+    spec_data: str,
 ) -> None:
     dictionary_source = ROOT / "dictionary" / "entries.jsonl"
-    phonology_source = ROOT / "spec" / "phonology.json"
     generator_source = ROOT / "scripts" / "build_books.py"
 
+    hash_sources = grammar_sources + spec_sources + [dictionary_source, generator_source]
     source_hashes = {
         str(path.relative_to(ROOT)): sha256(path)
-        for path in grammar_sources
+        for path in hash_sources
     }
-    for path in [dictionary_source, phonology_source, generator_source]:
-        source_hashes[str(path.relative_to(ROOT))] = sha256(path)
 
     manifest = {
         "project": "STRING",
         "version": version,
         "source_commit": commit,
         "grammar_sources": [str(p.relative_to(ROOT)) for p in grammar_sources],
-        "phonology_source": "spec/phonology.json",
+        "spec_sources": [str(p.relative_to(ROOT)) for p in spec_sources],
         "dictionary_source": "dictionary/entries.jsonl",
         "dictionary_accepted_entries": accepted_entries,
         "dictionary_release_data": dictionary_data,
+        "spec_release_data": spec_data,
         "sha256": source_hashes,
     }
     (DIST / f"BUILD-MANIFEST-v{version}.json").write_text(
@@ -201,18 +229,28 @@ def main() -> None:
     grammar_md, grammar_sources = build_grammar(version, commit)
     dictionary_md, accepted_entries = build_dictionary(version, commit)
     dictionary_data = copy_dictionary_data(version)
+    spec_data, spec_sources = build_spec_export(version, commit)
 
     shutil.copyfile(grammar_md, DIST / f"STRING-Grammar-v{version}.md")
     shutil.copyfile(dictionary_md, DIST / f"STRING-Dictionary-v{version}.md")
 
-    write_manifest(version, commit, grammar_sources, accepted_entries, dictionary_data)
+    write_manifest(
+        version,
+        commit,
+        grammar_sources,
+        spec_sources,
+        accepted_entries,
+        dictionary_data,
+        spec_data,
+    )
 
     print(json.dumps({
         "version": version,
         "source_commit": commit,
         "grammar_markdown": str(grammar_md.relative_to(ROOT)),
         "dictionary_markdown": str(dictionary_md.relative_to(ROOT)),
-        "accepted_entries": accepted_entries,
+        "dictionary_entries": accepted_entries,
+        "spec_export": spec_data,
     }))
 
 
