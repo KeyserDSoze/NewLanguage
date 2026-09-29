@@ -121,6 +121,7 @@ jobs:
               "STRING-Dictionary-v${VERSION}.pdf" \
               "STRING-Dictionary-v${VERSION}.epub" \
               "STRING-Dictionary-v${VERSION}.jsonl" \
+              "STRING-Spec-v${VERSION}.json" \
               "BUILD-MANIFEST-v${VERSION}.json" \
               > "SHA256SUMS-v${VERSION}.txt"
           )
