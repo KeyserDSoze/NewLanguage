@@ -125,3 +125,20 @@ Until accepted as a dictionary entry, write the components as separate words.
 STRING avoids making abbreviations a core grammatical requirement.
 
 A future chapter may define spoken letter names for acronyms. Until then, an external acronym can remain an external technical token or be replaced by its full STRING expression.
+
+
+## 12. External project name — CONFIRMED
+
+**STRING** is the external English project/language label used by this repository and its publications.
+
+The spelling `STRING` is **not** presented as a canonical lexical word in the STRING phonological system, because its English spelling contains structures that ordinary STRING words forbid.
+
+Documentation may therefore write:
+
+```text
+STRING
+```
+
+as a proper external label in the same way it can preserve a product name, URL, code identifier, or quoted source spelling.
+
+An internal STRING autonym can be selected separately if the project later needs one. Until that decision is made, do not silently invent or normalize the language name inside STRING text.
