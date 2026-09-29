@@ -27,11 +27,13 @@ English is the primary lexical donor language. STRING does **not** copy irregula
 
 - `grammar/` — normative grammar sources, written in English.
 - `dictionary/` — canonical lexical data, lexical rules, and dictionary metadata.
+- `spec/` — machine-readable alphabet and phonology used by tooling.
 - `prompts/` — prompts for LLMs that need to understand or produce STRING.
 - `site/` — sources for the static documentation and searchable dictionary.
 - `book/` — publishing policy only; generated books are never edited here.
-- `scripts/` — deterministic generators used by CI.
-- `.github/workflows/` — build and release automation.
+- `scripts/` — deterministic generators and validators used by CI.
+- `tests/` — executable tests for the language rules and dictionary.
+- `.github/workflows/` — book/release and GitHub Pages automation.
 
 ## Single-source publishing model
 
@@ -49,7 +51,7 @@ The build pipeline produces:
 - a build manifest containing the exact source commit;
 - SHA-256 checksums.
 
-Every push to `main` builds and validates the current publications as a GitHub Actions artifact.
+Every push to `main` validates the language and builds the current publications as a GitHub Actions artifact. A separate Pages workflow generates the public grammar and searchable accepted dictionary from the same sources.
 
 ## Versioning and releases
 
@@ -91,10 +93,10 @@ That means one or more consonant-vowel units, optionally followed by one final c
 
 Examples:
 
-- `DARU` → DA-RU
-- `MALU` → MA-LU
-- `CAMU` → CA-MU
-- `MAR` → MA-R
+- `daru` → DA-RU
+- `malu` → MA-LU
+- `camu` → CA-MU
+- `mar` → MA-R
 
 The final consonant is part of the word: it is written if it is pronounced and pronounced if it is written.
 
