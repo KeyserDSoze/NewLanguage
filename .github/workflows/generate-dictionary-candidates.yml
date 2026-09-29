@@ -1,0 +1,46 @@
+name: Generate dictionary candidates
+
+on:
+  workflow_dispatch:
+    inputs:
+      limit:
+        description: "Number of English frequency candidates to generate"
+        required: true
+        default: "50000"
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  candidates:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: dictionary/generator-requirements.txt
+
+      - name: Install pinned lexical generator dependencies
+        run: pip install -r dictionary/generator-requirements.txt
+
+      - name: Generate candidates
+        shell: bash
+        run: |
+          python3 scripts/generate_dictionary_candidates.py \
+            --limit "${{ inputs.limit }}"
+
+      - name: Upload review artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: string-dictionary-candidates-${{ inputs.limit }}
+          path: |
+            build/dictionary-candidates.jsonl
+            build/dictionary-candidates.meta.json
+          if-no-files-found: error
