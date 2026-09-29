@@ -9,6 +9,7 @@ sys.path.insert(0, str(ROOT / "scripts"))
 
 from normalize_ipa import normalize  # noqa: E402
 from read_number import read_number  # noqa: E402
+from read_datetime import read_date, read_time  # noqa: E402
 
 
 class PhonologyTests(unittest.TestCase):
@@ -56,6 +57,27 @@ class NumberTests(unittest.TestCase):
     def test_invalid_number_is_rejected(self):
         with self.assertRaises(ValueError):
             read_number("12x")
+
+
+class DateTimeTests(unittest.TestCase):
+    def test_date_reading(self):
+        self.assertEqual(
+            read_date("2026-09-29"),
+            "det tun ziro tun sikas, ziro nayan, tun nayan",
+        )
+
+    def test_time_reading(self):
+        self.assertEqual(read_time("14:30"), "tam wan foro, tiri ziro")
+        self.assertEqual(
+            read_time("08:05:09"),
+            "tam ziro het, ziro fav, ziro nayan",
+        )
+
+    def test_invalid_calendar_values_are_rejected(self):
+        with self.assertRaises(ValueError):
+            read_date("2026-02-30")
+        with self.assertRaises(ValueError):
+            read_time("25:00")
 
 
 if __name__ == "__main__":
