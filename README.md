@@ -25,11 +25,48 @@ English is the primary lexical donor language. STRING does **not** copy irregula
 
 ## Repository structure
 
-- `grammar/` — the normative grammar, written in English.
-- `dictionary/` — dictionary model, lexical rules, source data, and generated entries.
+- `grammar/` — normative grammar sources, written in English.
+- `dictionary/` — canonical lexical data, lexical rules, and dictionary metadata.
 - `prompts/` — prompts for LLMs that need to understand or produce STRING.
-- `site/` — source area for the future static documentation and searchable dictionary.
-- `book/` — publishing plan and sources for future PDF and EPUB editions.
+- `site/` — sources for the static documentation and searchable dictionary.
+- `book/` — publishing policy only; generated books are never edited here.
+- `scripts/` — deterministic generators used by CI.
+- `.github/workflows/` — build and release automation.
+
+## Single-source publishing model
+
+The repository is the source; the books are build products.
+
+**PDF and EPUB files are never edited or committed manually.** Contributions are made to grammar Markdown, dictionary data, prompts, and other canonical sources. GitHub Actions rebuilds the publications from those sources.
+
+The build pipeline produces:
+
+- `STRING-Grammar-vX.Y.Z.pdf`
+- `STRING-Grammar-vX.Y.Z.epub`
+- `STRING-Dictionary-vX.Y.Z.pdf`
+- `STRING-Dictionary-vX.Y.Z.epub`
+- versioned machine-readable dictionary data;
+- a build manifest containing the exact source commit;
+- SHA-256 checksums.
+
+Every push to `main` builds and validates the current publications as a GitHub Actions artifact.
+
+## Versioning and releases
+
+The canonical project version is stored in `VERSION` and follows semantic versioning.
+
+A release version is immutable:
+
+1. update the canonical source files;
+2. update `VERSION` when the contribution set is ready to become a release;
+3. push to `main`;
+4. GitHub Actions rebuilds everything;
+5. the workflow creates tag `vX.Y.Z`;
+6. the generated PDF, EPUB, dictionary data, build manifest, and checksums are attached to the GitHub Release.
+
+The workflow can also be started manually from GitHub Actions with **Publish the current VERSION** enabled. This is useful for publishing a version whose `VERSION` file already existed before the release pipeline.
+
+Generated output is intentionally ignored by Git. A release can always be reproduced from its tag and source commit.
 
 ## Project goals
 
