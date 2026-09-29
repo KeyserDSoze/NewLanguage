@@ -25,6 +25,8 @@ from normalize_ipa import normalize
 ROOT = Path(__file__).resolve().parents[1]
 DEFAULT_OUTPUT = ROOT / "build" / "dictionary-candidates.jsonl"
 DEFAULT_META = ROOT / "build" / "dictionary-candidates.meta.json"
+DEFAULT_COLLISIONS = ROOT / "build" / "dictionary-collisions.jsonl"
+DEFAULT_PRONUNCIATION_REVIEW = ROOT / "build" / "dictionary-pronunciation-review.jsonl"
 
 WORDFREQ_VERSION = "3.1.1"
 WN_VERSION = "1.1.1"
@@ -386,6 +388,12 @@ def main() -> None:
     parser.add_argument("--limit", type=int, default=50000)
     parser.add_argument("--output", type=Path, default=DEFAULT_OUTPUT)
     parser.add_argument("--meta", type=Path, default=DEFAULT_META)
+    parser.add_argument("--collisions", type=Path, default=DEFAULT_COLLISIONS)
+    parser.add_argument(
+        "--pronunciation-review",
+        type=Path,
+        default=DEFAULT_PRONUNCIATION_REVIEW,
+    )
     parser.add_argument(
         "--cmudict",
         type=Path,
@@ -404,6 +412,28 @@ def main() -> None:
         "".join(json.dumps(row, ensure_ascii=False) + "\n" for row in candidates),
         encoding="utf-8",
     )
+
+    collision_rows = [row for row in candidates if row.get("collisions")]
+    pronunciation_rows = [
+        row for row in candidates
+        if row.get("review_status") in {
+            "needs-pronunciation",
+            "unsupported-pronunciation",
+        }
+    ]
+
+    args.collisions.write_text(
+        "".join(json.dumps(row, ensure_ascii=False) + "\n" for row in collision_rows),
+        encoding="utf-8",
+    )
+    args.pronunciation_review.write_text(
+        "".join(json.dumps(row, ensure_ascii=False) + "\n" for row in pronunciation_rows),
+        encoding="utf-8",
+    )
+
+    meta["collision_review_rows"] = len(collision_rows)
+    meta["pronunciation_review_rows"] = len(pronunciation_rows)
+
     args.meta.write_text(
         json.dumps(meta, indent=2, ensure_ascii=False) + "\n",
         encoding="utf-8",
