@@ -36,5 +36,7 @@ The machine-readable phonological working standard lives in `spec/phonology.json
 - `02-core-grammar.md`
 - `03-pronouns-and-nouns.md`
 - `04-verbs-tense-and-questions.md`
+- `05-modifiers-quantity-and-comparison.md`
+- `06-prepositions-and-conjunctions.md`
 
 The book pipeline discovers numbered grammar chapters automatically, so adding a new chapter to this directory adds it to the next generated grammar publication.
