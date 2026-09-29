@@ -22,7 +22,7 @@ ROOT = Path(__file__).resolve().parents[1]
 DEFAULT_OUTPUT = ROOT / "build" / "dictionary-candidates.jsonl"
 DEFAULT_META = ROOT / "build" / "dictionary-candidates.meta.json"
 
-WORDFREQ_VERSION = "3.2.0"
+WORDFREQ_VERSION = "3.1.1"
 WN_VERSION = "1.1.1"
 OEWN_LEXICON = "oewn:2025"
 
