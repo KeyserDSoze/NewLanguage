@@ -4,6 +4,26 @@ All released versions of STRING are tracked here.
 
 The canonical version is stored in `VERSION`. A release is built entirely from the repository sources at the commit associated with that version.
 
+## 0.6.0
+
+Make STRING easier to learn and make the 50,000-word pipeline sense-aware:
+
+- add a deliberately redundant core sentence-pattern reference covering the main grammar in one chapter;
+- add a regular invariant modal system for ability, possibility, need, necessity, advice, and intention;
+- add accepted `me`, `mas`, `xud`, and `won`;
+- define modal negation scope with ordinary `not` placement instead of negative modal forms;
+- integrate Open English WordNet 2025 as the lemma/sense inventory for candidate generation;
+- pin `wn==1.1.1` and the CI-available `wordfreq==3.1.1`;
+- continue using the pinned upstream CMU Pronouncing Dictionary revision for US-English pronunciation;
+- generate one review candidate per English lemma, carrying all WordNet parts of speech and senses;
+- rank lemmas by frequency while flagging spellings whose score is contaminated by use as an inflected form of another lemma;
+- classify already accepted core lemmas separately from true lexical collisions;
+- exclude resolved core lemmas from new-candidate collision statistics;
+- add a documented proposed → reviewed → accepted dictionary review process;
+- keep the full 50,000-candidate run manual and non-normative, with an automatic 100-lemma smoke test when the generator changes;
+- verify the latest 100-lemma smoke test with 100 pronunciation candidates, zero unsupported pronunciations, six true core collisions, and zero collisions among unresolved new candidates;
+- expand the accepted core dictionary to 83 entries.
+
 ## 0.5.0
 
 Add compact reference grammar and universal structured time notation:
