@@ -1,10 +1,20 @@
 name: Generate dictionary candidates
 
 on:
+  push:
+    branches:
+      - main
+    paths:
+      - "dictionary/generator-requirements.txt"
+      - "dictionary/sources.md"
+      - "scripts/generate_dictionary_candidates.py"
+      - "scripts/normalize_ipa.py"
+      - "spec/phonology.json"
+      - ".github/workflows/generate-dictionary-candidates.yml"
   workflow_dispatch:
     inputs:
       limit:
-        description: "Number of English frequency candidates to generate"
+        description: "Number of sense-aware English lexical candidates to generate"
         required: true
         default: "50000"
         type: string
@@ -20,6 +30,16 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      - name: Resolve candidate limit
+        id: limit
+        shell: bash
+        run: |
+          LIMIT="100"
+          if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
+            LIMIT="${{ inputs.limit }}"
+          fi
+          echo "value=$LIMIT" >> "$GITHUB_OUTPUT"
+
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
@@ -30,16 +50,19 @@ jobs:
       - name: Install pinned lexical generator dependencies
         run: pip install -r dictionary/generator-requirements.txt
 
-      - name: Generate candidates
+      - name: Install Open English WordNet 2025
+        run: python -m wn download oewn:2025
+
+      - name: Generate sense-aware candidates
         shell: bash
         run: |
           python3 scripts/generate_dictionary_candidates.py \
-            --limit "${{ inputs.limit }}"
+            --limit "${{ steps.limit.outputs.value }}"
 
       - name: Upload review artifact
         uses: actions/upload-artifact@v4
         with:
-          name: string-dictionary-candidates-${{ inputs.limit }}
+          name: string-dictionary-candidates-${{ steps.limit.outputs.value }}
           path: |
             build/dictionary-candidates.jsonl
             build/dictionary-candidates.meta.json
