@@ -10,6 +10,7 @@ sys.path.insert(0, str(ROOT / "scripts"))
 from normalize_ipa import normalize  # noqa: E402
 from read_number import read_number  # noqa: E402
 from read_datetime import read_date, read_time  # noqa: E402
+from generate_dictionary_candidates import arpabet_to_ipa  # noqa: E402
 
 
 class PhonologyTests(unittest.TestCase):
@@ -39,6 +40,17 @@ class PhonologyTests(unittest.TestCase):
             item = json.loads(raw)
             if item.get("status") == "accepted":
                 self.assertRegex(item["string"], pattern)
+
+
+class LexicalGeneratorTests(unittest.TestCase):
+    def test_arpabet_to_ipa(self):
+        self.assertEqual(arpabet_to_ipa(["P", "L", "IY1", "Z"]), "pliz")
+        self.assertEqual(arpabet_to_ipa(["DH", "EH1", "R"]), "ðɛɹ")
+        self.assertEqual(arpabet_to_ipa(["AH0", "DH", "ER0"]), "əðɚ")
+
+    def test_arpabet_output_normalizes_to_string(self):
+        ipa = arpabet_to_ipa(["P", "L", "IY1", "Z"])
+        self.assertEqual(normalize("/" + ipa + "/"), ("piliz", "pi-li-z"))
 
 
 class NumberTests(unittest.TestCase):
