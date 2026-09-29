@@ -12,6 +12,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 SPEC_PATH = ROOT / "spec" / "phonology.json"
 NUMBER_SPEC_PATH = ROOT / "spec" / "numbers.json"
+DATETIME_SPEC_PATH = ROOT / "spec" / "datetime.json"
 DICTIONARY_PATH = ROOT / "dictionary" / "entries.jsonl"
 
 VALID_STATUSES = {"proposed", "reviewed", "accepted", "deprecated"}
@@ -123,11 +124,40 @@ def validate_number_spec(
             )
 
 
+def validate_datetime_spec(
+    errors: list[str],
+    datetime_spec: dict,
+    accepted_words: set[str],
+    pattern: re.Pattern[str],
+) -> None:
+    for section in ("date", "time"):
+        item = datetime_spec.get(section)
+        if not isinstance(item, dict):
+            fail(errors, f"spec/datetime.json: missing {section} object")
+            continue
+
+        label = item.get("label")
+        if not isinstance(label, str) or not pattern.fullmatch(label):
+            fail(errors, f"spec/datetime.json: illegal {section} label {label!r}")
+        elif label not in accepted_words:
+            fail(errors, f"spec/datetime.json: {section} label {label!r} is not accepted")
+
+        regex = item.get("regex")
+        if not isinstance(regex, str):
+            fail(errors, f"spec/datetime.json: {section} regex must be text")
+        else:
+            try:
+                re.compile(regex)
+            except re.error as exc:
+                fail(errors, f"spec/datetime.json: invalid {section} regex: {exc}")
+
+
 def main() -> int:
     errors: list[str] = []
 
     spec = load_json(SPEC_PATH, errors)
     number_spec = load_json(NUMBER_SPEC_PATH, errors)
+    datetime_spec = load_json(DATETIME_SPEC_PATH, errors)
 
     if not spec:
         for error in errors:
@@ -200,6 +230,8 @@ def main() -> int:
 
     if number_spec:
         validate_number_spec(errors, number_spec, set(accepted_words), pattern)
+    if datetime_spec:
+        validate_datetime_spec(errors, datetime_spec, set(accepted_words), pattern)
 
     if errors:
         for error in errors:
