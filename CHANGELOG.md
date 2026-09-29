@@ -4,6 +4,29 @@ All released versions of STRING are tracked here.
 
 The canonical version is stored in `VERSION`. A release is built entirely from the repository sources at the commit associated with that version.
 
+## 0.4.0
+
+Extend STRING into a more complete usable language and prepare large-scale lexical generation:
+
+- add a canonical digit-by-digit decimal number system;
+- add spoken forms for digits 0–9, decimal point, and negative sign;
+- add a deterministic numeric reader and machine-readable `spec/numbers.json`;
+- define punctuation, capitalization, proper-name adaptation, external identifiers, and transparent compounds;
+- define direct and negative commands without special verb morphology;
+- add optional politeness marker `piliz`;
+- extend `dat` as a content-clause and relative-clause linker;
+- define regular conditional, reason, result, and coordinated complex clauses;
+- define word classes without mandatory grammatical endings;
+- explicitly reject automatic import of English inflectional and derivational suffixes;
+- prefer transparent composition before lexical derivation;
+- expand the accepted core dictionary to 73 entries;
+- export a versioned machine-readable STRING specification in releases;
+- define reproducible lexical source policy for frequency, pronunciation, and senses;
+- add a manual candidate-generation workflow targeting 50,000 English frequency candidates;
+- pin wordfreq 3.2.0 for frequency prioritization;
+- pin the upstream CMU Pronouncing Dictionary source revision used by the candidate generator;
+- keep generated candidates non-normative until explicit review and promotion.
+
 ## 0.3.0
 
 Expand the minimal grammar beyond the core clause:
