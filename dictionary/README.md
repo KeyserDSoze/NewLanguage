@@ -9,6 +9,9 @@ English supplies the lexical anchor and recognizable pronunciation. STRING suppl
 - `entries.jsonl` — accepted and proposed lexical data.
 - `schema.md` — dictionary record format.
 - `collision-policy.md` — rules for avoiding accidental homophones.
+- `sources.md` — licensed/reproducible English lexical, frequency, and pronunciation sources.
+- `review-process.md` — candidate review and promotion into the accepted standard.
+- `generator-requirements.txt` — pinned dependencies for large-scale candidate generation.
 - `../spec/phonology.json` — machine-readable sound system and IPA mapping.
 
 ## Generation pipeline
