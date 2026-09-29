@@ -1,8 +1,10 @@
 #!/usr/bin/env python3
-"""Generate frequency-prioritized English -> STRING candidate forms.
+"""Generate sense-aware English -> STRING candidate forms.
 
-This script does not modify dictionary/entries.jsonl and never accepts words.
-It produces a review artifact.
+Open English WordNet provides lemma/POS/sense inventory, wordfreq provides
+review priority, and CMUdict provides reference pronunciation.
+
+This script never modifies dictionary/entries.jsonl and never accepts words.
 """
 
 from __future__ import annotations
@@ -14,13 +16,15 @@ import urllib.request
 from collections import defaultdict
 from pathlib import Path
 
-from wordfreq import top_n_list, zipf_frequency
-
 from normalize_ipa import normalize
 
 ROOT = Path(__file__).resolve().parents[1]
 DEFAULT_OUTPUT = ROOT / "build" / "dictionary-candidates.jsonl"
 DEFAULT_META = ROOT / "build" / "dictionary-candidates.meta.json"
+
+WORDFREQ_VERSION = "3.2.0"
+WN_VERSION = "1.1.1"
+OEWN_LEXICON = "oewn:2025"
 
 CMUDICT_COMMIT = "0f8072f814306c5ee4fbf992ed853601b12c01f9"
 CMUDICT_URL = (
@@ -137,44 +141,92 @@ def accepted_headwords() -> dict[str, list[str]]:
     return dict(result)
 
 
-def frequency_words(limit: int) -> list[str]:
-    # Ask for a larger surface-token pool because punctuation, contractions,
-    # duplicates, and non-simple forms are filtered here.
-    pool_size = max(limit * 3, limit + 25000)
-    raw = top_n_list("en", pool_size, ascii_only=True)
+def lexical_inventory() -> list[dict]:
+    # Imported lazily so the core language test suite does not need lexical
+    # generator dependencies.
+    import wn
+    from wordfreq import zipf_frequency
 
-    result: list[str] = []
-    seen: set[str] = set()
-    for value in raw:
-        word = value.lower()
-        if not ASCII_WORD.fullmatch(word):
-            continue
-        if word in seen:
-            continue
-        seen.add(word)
-        result.append(word)
-        if len(result) >= limit:
-            break
+    wordnet = wn.Wordnet(OEWN_LEXICON)
+    inventory: dict[tuple[str, str], dict] = {}
 
-    return result
+    for word in wordnet.words():
+        lemma = word.lemma().lower()
+        pos = word.pos
+
+        # The first 50k target is single-word core vocabulary. Multiword
+        # expressions are handled compositionally first.
+        if not ASCII_WORD.fullmatch(lemma):
+            continue
+
+        key = (lemma, pos)
+        record = inventory.setdefault(
+            key,
+            {
+                "english": lemma,
+                "part_of_speech": pos,
+                "zipf_frequency": zipf_frequency(lemma, "en"),
+                "wordnet_word_ids": [],
+                "senses": [],
+            },
+        )
+        record["wordnet_word_ids"].append(word.id)
+
+        known_sense_ids = {sense["sense_id"] for sense in record["senses"]}
+        for sense in word.senses():
+            if sense.id in known_sense_ids:
+                continue
+            synset = sense.synset()
+            definition = synset.definition() or ""
+            record["senses"].append(
+                {
+                    "sense_id": sense.id,
+                    "synset_id": synset.id,
+                    "definition_en": definition,
+                }
+            )
+
+    records = list(inventory.values())
+    records.sort(
+        key=lambda item: (
+            -float(item["zipf_frequency"]),
+            item["english"],
+            item["part_of_speech"],
+        )
+    )
+    return records
 
 
 def build_candidates(limit: int, cmudict_path: Path) -> tuple[list[dict], dict]:
     pronunciations = load_cmudict(cmudict_path)
     accepted = accepted_headwords()
-    generated_by_form: dict[str, list[str]] = defaultdict(list)
+    generated_by_form: dict[str, list[dict]] = defaultdict(list)
+
+    inventory = lexical_inventory()
+    selected = inventory[:limit]
 
     output: list[dict] = []
     with_pronunciation = 0
     unsupported = 0
+    accepted_collisions = 0
+    candidate_collisions = 0
 
-    for rank, english in enumerate(frequency_words(limit), start=1):
+    for rank, lexical in enumerate(selected, start=1):
+        english = lexical["english"]
+        pos = lexical["part_of_speech"]
         variants = pronunciations.get(english, [])
+        senses = lexical["senses"]
+
         row = {
             "frequency_rank": rank,
-            "english_surface": english,
-            "zipf_frequency": zipf_frequency(english, "en"),
-            "source_status": "frequency-surface-form",
+            "english": english,
+            "part_of_speech": pos,
+            "zipf_frequency": lexical["zipf_frequency"],
+            "wordnet_word_ids": lexical["wordnet_word_ids"],
+            "senses": senses,
+            "sense_id": senses[0]["sense_id"] if senses else None,
+            "definition_en": senses[0]["definition_en"] if senses else "",
+            "source_status": "oewn-lemma-pos",
             "cmudict_pronunciations": variants,
             "ipa_variants": [],
             "ipa_reference": None,
@@ -192,27 +244,40 @@ def build_candidates(limit: int, cmudict_path: Path) -> tuple[list[dict], dict]:
 
                 collisions = []
                 for existing in accepted.get(candidate, []):
-                    collisions.append({
-                        "type": "accepted",
-                        "english": existing,
-                        "string": candidate,
-                    })
-                for previous in generated_by_form.get(candidate, []):
-                    collisions.append({
-                        "type": "candidate",
-                        "english": previous,
-                        "string": candidate,
-                    })
+                    collisions.append(
+                        {
+                            "type": "accepted",
+                            "english": existing,
+                            "string": candidate,
+                        }
+                    )
+                    accepted_collisions += 1
 
-                row.update({
-                    "ipa_variants": ipa_variants,
-                    "ipa_reference": "/" + ipa_reference + "/",
-                    "mechanical_string": candidate,
-                    "string_segments": segments,
-                    "collisions": collisions,
-                    "review_status": "candidate",
-                })
-                generated_by_form[candidate].append(english)
+                for previous in generated_by_form.get(candidate, []):
+                    collisions.append(
+                        {
+                            "type": "candidate",
+                            "english": previous["english"],
+                            "part_of_speech": previous["part_of_speech"],
+                            "same_english_lemma": previous["english"] == english,
+                            "string": candidate,
+                        }
+                    )
+                    candidate_collisions += 1
+
+                row.update(
+                    {
+                        "ipa_variants": ipa_variants,
+                        "ipa_reference": "/" + ipa_reference + "/",
+                        "mechanical_string": candidate,
+                        "string_segments": segments,
+                        "collisions": collisions,
+                        "review_status": "candidate",
+                    }
+                )
+                generated_by_form[candidate].append(
+                    {"english": english, "part_of_speech": pos}
+                )
                 with_pronunciation += 1
             except ValueError as exc:
                 row["review_status"] = "unsupported-pronunciation"
@@ -223,16 +288,20 @@ def build_candidates(limit: int, cmudict_path: Path) -> tuple[list[dict], dict]:
 
     meta = {
         "project": "STRING",
-        "purpose": "review candidates; never normative automatically",
+        "purpose": "sense-aware review candidates; never normative automatically",
         "requested_limit": limit,
+        "available_single_word_lemma_pos_records": len(inventory),
         "generated_rows": len(output),
         "rows_with_string_candidate": with_pronunciation,
         "unsupported_pronunciation_rows": unsupported,
-        "wordfreq_version": "3.2.0",
+        "accepted_collision_events": accepted_collisions,
+        "candidate_collision_events": candidate_collisions,
+        "wordfreq_version": WORDFREQ_VERSION,
+        "wn_version": WN_VERSION,
+        "wordnet_lexicon": OEWN_LEXICON,
         "cmudict_repository": "cmusphinx/cmudict",
         "cmudict_commit": CMUDICT_COMMIT,
         "cmudict_url": CMUDICT_URL,
-        "lexical_sense_source_planned": "Open English WordNet 2025",
     }
     return output, meta
 
