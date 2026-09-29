@@ -31,9 +31,9 @@ The project must preserve the upstream attribution and license notices in dictio
 
 The base 2025 edition is preferred for ordinary vocabulary. Proper names are handled separately by STRING's proper-name rules rather than being allowed to dominate the core 50,000-word target.
 
-## wordfreq 3.2.0 — frequency prioritization
+## wordfreq 3.1.1 — frequency prioritization
 
-STRING uses **wordfreq 3.2.0** as a reproducible frequency signal.
+STRING uses **wordfreq 3.1.1** as a reproducible frequency signal.
 
 Role:
 
