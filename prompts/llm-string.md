@@ -6,7 +6,7 @@ Use the repository as the authority. Never invent an exception merely to make a 
 
 ## Authority order
 
-1. `spec/phonology.json` for legal sounds, letters, and word shape;
+1. `spec/*.json` for machine-readable phonology, numbers, and other formal language rules;
 2. grammar rules marked **CONFIRMED** in `grammar/`;
 3. `status: accepted` entries in `dictionary/entries.jsonl`;
 4. grammar rules marked **WORKING STANDARD** or **PROVISIONAL**;
@@ -33,7 +33,7 @@ Do not introduce:
 - context-dependent letter sounds;
 - distinctions expressed only by stress or capitalization.
 
-Use the exact current letter-to-sound table in `spec/phonology.json`.
+Use the exact current letter-to-sound table in `spec/phonology.json`. For numeric notation, use `spec/numbers.json`; do not invent English-style irregular number morphology.
 
 ## Vocabulary
 
@@ -66,7 +66,12 @@ Do not present a new word as accepted unless it is actually an accepted dictiona
 - progressive uses `bi`;
 - perfect uses `hav`;
 - yes/no questions invert the first predicate word with the subject;
-- verb chains do not require an infinitive marker equivalent to English `to`.
+- verb chains do not require an infinitive marker equivalent to English `to`;
+- decimal numbers use ordinary digits and canonical digit-by-digit spoken reading from `spec/numbers.json`;
+- punctuation is structural and does not alter word pronunciation;
+- fully adapted proper names follow STRING phonology;
+- opaque identifiers such as URLs, email addresses, usernames, and code may remain external tokens;
+- compounds should remain transparent multi-word expressions until lexicalization is justified.
 
 Always consult the grammar chapters for exact ordering and examples.
 
