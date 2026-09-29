@@ -1,0 +1,74 @@
+name: Generate full dictionary candidates
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - "dictionary/full-generation-request.txt"
+  workflow_dispatch:
+    inputs:
+      limit:
+        description: "Number of English lemmas to generate"
+        required: true
+        default: "50000"
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  candidates:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Resolve requested limit
+        id: limit
+        shell: bash
+        run: |
+          if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
+            LIMIT="${{ inputs.limit }}"
+          else
+            LIMIT="$(head -n 1 dictionary/full-generation-request.txt | tr -d '[:space:]')"
+          fi
+
+          if ! [[ "$LIMIT" =~ ^[0-9]+$ ]] || [[ "$LIMIT" -lt 1 ]]; then
+            echo "Invalid candidate limit: $LIMIT" >&2
+            exit 1
+          fi
+
+          echo "value=$LIMIT" >> "$GITHUB_OUTPUT"
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: dictionary/generator-requirements.txt
+
+      - name: Install pinned lexical generator dependencies
+        run: pip install -r dictionary/generator-requirements.txt
+
+      - name: Install Open English WordNet 2025
+        run: python -m wn download oewn:2025
+
+      - name: Generate full candidate set
+        shell: bash
+        run: |
+          python3 scripts/generate_dictionary_candidates.py \
+            --limit "${{ steps.limit.outputs.value }}"
+
+      - name: Upload full review artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: string-full-dictionary-candidates-${{ steps.limit.outputs.value }}-${{ github.sha }}
+          path: |
+            build/dictionary-candidates.jsonl
+            build/dictionary-candidates.meta.json
+            build/dictionary-collisions.jsonl
+            build/dictionary-pronunciation-review.jsonl
+          if-no-files-found: error
+          retention-days: 30
