@@ -1,95 +1,109 @@
 # 02 — Core Grammar
 
-This file records the simplest stable grammatical principles that can already be extracted from the historical design without carrying over its irregularities.
+STRING grammar is designed around one rule: encode information only when it is useful.
 
 ## 1. Basic sentence order — CONFIRMED
 
 The default sentence order is:
 
 ```text
-SUBJECT + VERB + COMPLEMENT
+SUBJECT + PREDICATE + COMPLEMENT
 ```
 
-The order should remain stable whenever possible.
+For an ordinary lexical verb this is equivalent to subject–verb–object.
 
-## 2. Verbs and person — CONFIRMED
+## 2. Verbs never agree with the subject — CONFIRMED
 
-A verb does not change because the subject changes person, number, or gender.
+A verb does not change for:
 
-The same lexical verb form is used with different subjects.
+- person;
+- gender;
+- singular or plural subject.
 
-This principle is already present in the historical examples and is retained because it reduces memorization.
+The lexical verb form is invariant.
+
+There are no irregular personal conjugations.
 
 ## 3. Explicit negation — CONFIRMED
 
-Negation is expressed with an explicit negation particle rather than by modifying the verb root.
+The negation word is:
 
-The exact final STRING form of that particle will be fixed after the alphabet and phoneme table are frozen.
+```text
+not
+```
 
-## 4. Questions — PROVISIONAL
+The verb itself does not change under negation.
 
-Questions must be marked explicitly and must not require irregular verb forms.
+Detailed placement is specified in `04-verbs-tense-and-questions.md`.
 
-The historical design used verb-subject inversion for yes/no questions. A final decision will compare that rule with a dedicated question particle and choose the simpler system.
+## 4. Questions — CONFIRMED
 
-Question words are lexical items and must follow the same pronunciation rules as every other STRING word.
+Yes/no questions use regular inversion of the first predicate word and the subject.
 
-## 5. Grammatical gender — CONFIRMED
+STRING does not require English-style `do/does/did` support merely to form a question.
 
-STRING does not require grammatical gender for ordinary nouns, articles, adjectives, or verb agreement.
+Question words use the same inversion pattern.
 
-Gender or biological sex is expressed only when the speaker intends to communicate it.
+Detailed rules are specified in `04-verbs-tense-and-questions.md`.
 
-## 6. Number — PROVISIONAL
+## 5. No grammatical gender — CONFIRMED
 
-Plural marking should not create illegal consonant clusters or irregular noun classes.
+Nouns, adjectives, articles, verbs, and ordinary pronouns do not encode grammatical gender.
 
-The historical `-s/-es` system is therefore not automatically retained.
+Sex or gender can be stated lexically when the speaker actually intends to communicate it.
 
-A preferred direction is to mark quantity only when needed, using a regular construction rather than many noun endings.
+## 6. Nouns do not inflect for plural — CONFIRMED
 
-## 7. Articles — PROVISIONAL
+A noun has one lexical form.
 
-The historical design contained masculine/feminine definite and indefinite articles.
+STRING does not add English `-s` or `-es`.
 
-The current design removes grammatical gender. STRING should therefore use at most a small, gender-neutral article system, and articles may be omitted where they do not add useful meaning.
+Quantity is expressed when needed with:
 
-Exact article forms remain to be normalized.
+- a number;
+- a quantifier;
+- context.
 
-## 8. Pronouns — PROVISIONAL
+This avoids irregular plurals and avoids unnecessary number marking.
 
-Pronouns must be:
+## 7. Articles are not required — CONFIRMED
 
-- few;
-- short;
-- easy to distinguish in speech;
-- invariant between subject and object wherever this does not create ambiguity;
-- free of grammatical gender unless a distinction is intentionally requested;
-- fully compatible with STRING phonotactics.
+STRING has no obligatory equivalent of English `a/an/the`.
 
-The historical pronoun inventory is documented in `legacy-source-notes.md`, but forms that violate the new sound rules are not normative.
+A noun can stand directly as a noun phrase.
 
-## 9. Tense, aspect, and mood — PROVISIONAL
+When deixis matters, use a demonstrative such as `dis` or `dat`.
 
-The historical spreadsheet contains more than one competing tense system.
+## 8. Pronouns — CONFIRMED
 
-STRING will not preserve multiple conjugation paradigms.
+STRING uses a small gender-neutral pronoun set.
 
-The target design is:
+Subject and object forms are identical.
 
-- invariant verb roots;
-- a very small set of regular tense/aspect/mood particles;
-- no person agreement;
-- no irregular verbs;
-- no duplicated forms for distinctions that context can express safely.
+See `03-pronouns-and-nouns.md`.
 
-The exact particle inventory will be specified in a dedicated chapter after the sound system is frozen.
+## 9. Tense and aspect use independent words — CONFIRMED
 
-## 10. General simplification rule — CONFIRMED
+The verb root never receives tense or participle suffixes.
+
+Tense and aspect are expressed by a small set of invariant words before the lexical verb.
+
+See `04-verbs-tense-and-questions.md`.
+
+## 10. Verb chains — CONFIRMED
+
+Compatible verbs can be placed in sequence without adding a mandatory equivalent of English `to`.
+
+For example, a modal or intention verb can be followed directly by the next verb.
+
+The words remain invariant.
+
+## 11. General simplification rule — CONFIRMED
 
 When two constructions communicate the same information, STRING prefers the construction that:
 
-1. uses fewer rules;
+1. uses fewer grammatical rules;
 2. creates fewer exceptions;
 3. is easier to hear correctly;
-4. remains unambiguous in ordinary conversation.
+4. remains clear in ordinary conversation;
+5. avoids repeating information already obvious from context.
